@@ -10,11 +10,11 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:450/api',
+        url: 'http://localhost:4500/api',
         description: 'Development server',
       },
       {
-        url: "https://timedrop-backend.onrender.com/api",
+        url: "https://spleetpay-backend.onrender.com/api",
         description: "Live Server"
       }
     ],
