@@ -30,7 +30,7 @@ const AdminUser = sequelize.define('AdminUser', {
     allowNull: false
   },
   permissions: {
-    type: DataTypes.ARRAY(DataTypes.STRING),
+    type: DataTypes.JSON,
     defaultValue: []
   },
   department: {

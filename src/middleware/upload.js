@@ -1,35 +1,14 @@
 const multer = require('multer');
-const multerS3 = require('multer-s3');
-const AWS = require('aws-sdk');
+// const multerS3 = require('multer-s3'); // Remove this
+// const AWS = require('aws-sdk'); // Remove this
 const path = require('path');
+const cloudinary = require('cloudinary').v2; // Import Cloudinary
 
-// Configure AWS S3
-const s3Client = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'us-east-1'
-});
-
-// S3 storage configuration
-const s3Storage = multerS3({
-  s3: s3Client,
-  bucket: process.env.AWS_BUCKET_NAME || 'spleetpay-uploads',
-  acl: 'private',
-  key: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const folder = req.route?.path.includes('kyc') ? 'kyc' : 'uploads';
-    const merchantId = req.user?.merchantId || req.adminUser?.id || 'anonymous';
-    
-    cb(null, `${folder}/${merchantId}/${file.fieldname}-${uniqueSuffix}.${file.originalname.split('.').pop()}`);
-  },
-  metadata: (req, file, cb) => {
-    cb(null, {
-      fieldName: file.fieldname,
-      originalName: file.originalname,
-      uploadedBy: req.user?.id || req.adminUser?.id || 'anonymous',
-      uploadedAt: new Date().toISOString()
-    });
-  }
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Memory storage as fallback
@@ -70,7 +49,7 @@ const generalFileFilter = (req, file, cb) => {
 
 // Configure multer instances
 const kycUpload = multer({
-  storage: process.env.AWS_ACCESS_KEY_ID ? s3Storage : memoryStorage,
+  storage: memoryStorage, // Use memory storage since we're using Cloudinary
   fileFilter: kycFileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit for KYC documents
@@ -79,7 +58,7 @@ const kycUpload = multer({
 });
 
 const generalUpload = multer({
-  storage: process.env.AWS_ACCESS_KEY_ID ? s3Storage : memoryStorage,
+  storage: memoryStorage, // Use memory storage since we're using Cloudinary
   fileFilter: generalFileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit for general uploads
@@ -134,6 +113,14 @@ const handleUploadError = (error, req, res, next) => {
           message: 'Unexpected file field'
         }
       });
+    } else if (error.code === 'INVALID_FILE_TYPE') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_FILE_TYPE',
+          message: error.message
+        }
+      });
     }
   }
   
@@ -156,5 +143,5 @@ module.exports = {
   uploadKYCDocument,
   uploadKYCDocuments,
   handleUploadError,
-  s3Client
-}; 
+  // s3Client // Remove s3Client
+};

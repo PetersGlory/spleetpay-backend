@@ -103,7 +103,7 @@ const Merchant = sequelize.define('Merchant', {
     field: 'settlement_schedule'
   },
   fees: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     allowNull: true
   }
 }, {

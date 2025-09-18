@@ -61,7 +61,7 @@ const Dispute = sequelize.define('Dispute', {
     defaultValue: 'NGN'
   },
   evidence: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     allowNull: true
   },
   resolution: {

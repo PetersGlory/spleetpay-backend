@@ -65,7 +65,7 @@ const Settlement = sequelize.define('Settlement', {
     field: 'period_end'
   },
   bankAccount: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     allowNull: true,
     field: 'bank_account'
   },

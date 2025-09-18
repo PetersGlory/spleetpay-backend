@@ -2,11 +2,6 @@ const express = require('express');
 const router = express.Router();
 const qrCodeController = require('../controllers/qrCode.controller');
 const { auth } = require('../middleware/auth');
-const { validate, schemas } = require('../middleware/validation');
-const { api: rateLimit } = require('../middleware/rateLimiter');
-
-// Apply rate limiting to all routes
-router.use(rateLimit);
 
 // Generate QR code
 router.post('/generate', auth, qrCodeController.generateQRCode);
@@ -15,13 +10,13 @@ router.post('/generate', auth, qrCodeController.generateQRCode);
 router.get('/', auth, qrCodeController.getQRCodes);
 
 // Get QR code by ID
-router.get('/:id', auth, validate(schemas.uuidParam, 'params'), qrCodeController.getQRCode);
+router.get('/:id', auth, qrCodeController.getQRCode);
 
 // Update QR code
-router.put('/:id', auth, validate(schemas.uuidParam, 'params'), qrCodeController.updateQRCode);
+router.put('/:id', auth, qrCodeController.updateQRCode);
 
 // Deactivate QR code
-router.delete('/:id', auth, validate(schemas.uuidParam, 'params'), qrCodeController.deactivateQRCode);
+router.delete('/:id', auth, qrCodeController.deactivateQRCode);
 
 // Get QR code statistics
 router.get('/stats/overview', auth, qrCodeController.getQRCodeStats);
