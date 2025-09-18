@@ -4,9 +4,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Mobile App API Documentation',
+      title: 'SplitPay API Documentation',
       version: '1.0.0',
-      description: 'API documentation for the mobile app shipping and logistics platform',
+      description: 'API documentation for the SplitPay platform',
     },
     servers: [
       {
