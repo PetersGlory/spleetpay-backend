@@ -16,9 +16,9 @@ const User = sequelize.define('User', {
       isEmail: true
     }
   },
-  password: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true
   },
   firstName: {
     type: DataTypes.STRING(100),
@@ -28,49 +28,25 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(100),
     allowNull: false
   },
-  phoneNumber: {
-    type: DataTypes.STRING(20),
-    allowNull: true
+  password: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    field: 'password_hash'
   },
-  dateOfBirth: {
-    type: DataTypes.DATEONLY,
-    allowNull: true
-  },
-  address: {
-    type: DataTypes.JSONB,
-    allowNull: true
-  },
-  kycStatus: {
-    type: DataTypes.ENUM('pending', 'verified', 'rejected'),
-    defaultValue: 'pending'
-  },
-  kycDocuments: {
-    type: DataTypes.JSONB,
-    allowNull: true
-  },
-  accountStatus: {
-    type: DataTypes.ENUM('active', 'suspended', 'closed'),
-    defaultValue: 'active'
+  preferredCurrency: {
+    type: DataTypes.CHAR(3),
+    defaultValue: 'NGN',
+    field: 'preferred_currency'
   },
   walletBalance: {
     type: DataTypes.DECIMAL(15, 2),
-    defaultValue: 0
+    defaultValue: 0.00,
+    field: 'wallet_balance'
   },
-  currency: {
-    type: DataTypes.STRING(3),
-    defaultValue: 'NGN'
-  },
-  lastLogin: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  emailVerified: {
+  isVerified: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  phoneVerified: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+    defaultValue: false,
+    field: 'is_verified'
   },
   verificationToken: {
     type: DataTypes.STRING,
@@ -83,6 +59,11 @@ const User = sequelize.define('User', {
   resetPasswordExpires: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  lastLogin: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'last_login'
   }
 }, {
   hooks: {

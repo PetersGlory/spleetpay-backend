@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth');
-const auth = require('../middleware/auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 
 /**
@@ -82,228 +82,28 @@ const auth = require('../middleware/auth');
  *       409:
  *         description: Email already exists
  */
+// User registration
 router.post('/register', authController.register);
 
-/**
- * @swagger
- * /auth/login:
- *   post:
- *     tags: [Authentication]
- *     summary: Login user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *       401:
- *         description: Invalid credentials
- */
+// User login
 router.post('/login', authController.login);
 
-/**
- * @swagger
- * /auth/google:
- *   post:
- *     tags: [Authentication]
- *     summary: Login user with Google
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - firstName
- *               - lastName
- *               - email
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               email:
- *                 type: string
- *                 format: email
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     email:
- *                       type: string
- *                     firstName:
- *                       type: string
- *                     lastName:
- *                       type: string
- *                     token:
- *                       type: string
- *       400:
- *         description: Missing required fields
- *       500:
- *         description: Server error 
- */
-router.post('/google', authController.googleAuth);
+// Admin login
+router.post('/admin/login', authController.adminLogin);
 
+// Refresh token
+router.post('/refresh', authController.refreshToken);
 
-/**
- * @swagger
- * /auth/me:
- *   get:
- *     tags: [Authentication]
- *     summary: Get current user profile
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User profile retrieved successfully
- *       401:
- *         description: Not authenticated
- */
-router.get('/me', auth, authController.getCurrentUser);
+// Email verification with OTP
+router.post('/verify-email', authController.verifyEmail);
 
-/**
- * @swagger
- * /auth/verify:
- *   post:
- *     tags: [Authentication]
- *     summary: Verify user email
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - verificationCode
- *             properties:
- *               verificationCode:
- *                 type: string
- *     responses:
- *       200:
- *         description: Email verified successfully
- *       400:
- *         description: Invalid verification code
- *       401:
- *         description: Not authenticated
- */
-router.post('/verify', auth, authController.verifyEmail);
-
-/**
- * @swagger
- * /auth/forgot-password:
- *   post:
- *     tags: [Authentication]
- *     summary: Request password reset
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *     responses:
- *       200:
- *         description: Password reset code sent to email
- *       404:
- *         description: User not found
- */
+// Forgot password
 router.post('/forgot-password', authController.forgotPassword);
 
-/**
- * @swagger
- * /auth/reset-password:
- *   post:
- *     tags: [Authentication]
- *     summary: Reset password using verification code
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - verificationCode
- *               - newPassword
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               verificationCode:
- *                 type: string
- *               newPassword:
- *                 type: string
- *                 minLength: 6
- *     responses:
- *       200:
- *         description: Password reset successfully
- *       400:
- *         description: Invalid or expired verification code
- */
+// Reset password
 router.post('/reset-password', authController.resetPassword);
 
-/**
- * @swagger
- * /auth/verify-reset-email:
- *   post:
- *     tags: [Authentication]
- *     summary: Verify email for password reset
- *     requestBody:
- *       required: true 
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - verificationCode
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               verificationCode:
- *                 type: string 
- *     responses:
- *       200:
- *         description: Email verified successfully
- *       400:
- *         description: Invalid verification code
- */
-router.post('/verify-reset-email', authController.verifyResetEmail);
+// Logout
+router.post('/logout', auth, authController.logout);
 
 module.exports = router;

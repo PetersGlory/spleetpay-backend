@@ -2,37 +2,60 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
 
 // Import route files
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
-const marketRoutes = require('./routes/market.routes');
-const orderRoutes = require('./routes/order.routes');
-const portfolioRoutes = require('./routes/portfolio.routes');
-const settingsRoutes = require('./routes/settings.routes');
-const bookmarkRoutes = require('./routes/bookmark.routes');
-const adminRoutes = require('./routes/admin.routes');
-const walletRoutes = require('./routes/wallet.routes')
+const paymentRoutes = require('./routes/payment.routes');
+const utilsRoutes = require('./routes/utils.routes');
+const transactionRoutes = require('./routes/transaction.routes');
+const merchantRoutes = require('./routes/merchant.routes');
+const qrCodeRoutes = require('./routes/qrCode.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
+const webhookRoutes = require('./routes/webhook.routes');
 const errorHandler = require('./middleware/errorHandler');
 const setupSwagger = require('./swagger');
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: '*', credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security middleware
+app.use(helmet());
+
+// Compression middleware
+app.use(compression());
+
+// CORS configuration
+app.use(cors({ 
+  origin: process.env.FRONTEND_URL || "*", 
+  credentials: true 
+}));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV
+  });
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/markets', marketRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/portfolio', portfolioRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/bookmarks', bookmarkRoutes);
-app.use('/api/wallets', walletRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/utils', utilsRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/merchants', merchantRoutes);
+app.use('/api/qr-codes', qrCodeRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Register Swagger docs
 setupSwagger(app);
