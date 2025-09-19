@@ -54,8 +54,8 @@ app.get("/", (req, res)=>{
       <title>Welcome</title>
     </head>
     <body style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0;">
-      <h1 style="color: #333; margin-bottom: 20px;">Welcome to the Payment Gateway API</h1>
-      <p style="color: #666; font-size: 16px; margin-bottom: 30px;">Explore our powerful payment solutions.</p>
+      <h1 style="color: #333; margin-bottom: 20px;">Welcome to the SplitPay API</h1>
+      <p style="color: #666; font-size: 16px; margin-bottom: 30px;">Explore our powerful api solutions.</p>
       <a href="/api-docs" style="text-decoration: none;">
         <button style="background-color: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s ease;">View API Docs</button>
       </a>
