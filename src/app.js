@@ -46,6 +46,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// default page
+app.get("/", (req, res)=>{
+  res.send(`
+    <html>
+    <head>
+      <title>Welcome</title>
+    </head>
+    <body>
+      <h1>Welcome to the Payment Gateway API</h1>
+      <p>Click the button below to view the API documentation:</p>
+      <a href="/api-docs"><button>View API Docs</button></a>
+    </body>
+    </html>
+  `);
+})
+
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
