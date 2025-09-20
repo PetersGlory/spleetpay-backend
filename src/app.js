@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const path = require('path');
 
 // Import route files
 const authRoutes = require('./routes/auth.routes');
@@ -35,6 +36,7 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static('public'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -48,20 +50,7 @@ app.get('/health', (req, res) => {
 
 // default page
 app.get("/", (req, res)=>{
-  res.send(`
-    <html style="background-color:#f0f2f5; font-family: Arial, sans-serif;">
-    <head>
-      <title>Welcome</title>
-    </head>
-    <body style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0;">
-      <h1 style="color: #333; margin-bottom: 20px;">Welcome to the SplitPay API</h1>
-      <p style="color: #666; font-size: 16px; margin-bottom: 30px;">Explore our powerful api solutions.</p>
-      <a href="/api-docs" style="text-decoration: none;">
-        <button style="background-color: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s ease;">View API Docs</button>
-      </a>
-    </body>
-    </html>
-  `);
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 })
 
 
