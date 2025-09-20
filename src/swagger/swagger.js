@@ -4,9 +4,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'SplitPay API Documentation',
+      title: 'SpleetPay API Documentation',
       version: '1.0.0',
-      description: 'API documentation for the SplitPay platform',
+      description: 'API documentation for the SpleetPay payment platform supporting Pay-for-Me and Group Split payments',
     },
     servers: [
       {
@@ -15,7 +15,7 @@ const options = {
       },
       {
         url: "https://spleetpay-backend.onrender.com/api",
-        description: "Live Server"
+        description: "Production Server"
       }
     ],
     components: {

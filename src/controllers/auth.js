@@ -63,17 +63,17 @@ module.exports = {
       const user = await User.create({ 
         email, 
         password, 
-        firstName, 
-        lastName, 
+          firstName,
+          lastName,
         phone,
         preferredCurrency: preferredCurrency || 'NGN',
         verificationToken
       });
 
       // Create wallet for the user
-      await Wallet.create({
-        userId: user.id,
-        balance: 0,
+        await Wallet.create({
+          userId: user.id,
+          balance: 0,
         currency: preferredCurrency || 'NGN'
       });
 
@@ -478,14 +478,14 @@ module.exports = {
           }
         });
       }
-
+  
       const user = await User.findOne({
         where: {
           resetPasswordToken: token,
           resetPasswordExpires: { [Op.gt]: new Date() }
         }
       });
-
+  
       if (!user) {
         return res.status(400).json({
           success: false,

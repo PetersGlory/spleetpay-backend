@@ -27,8 +27,8 @@ module.exports = {
       let wallet = user.wallet;
       if (!wallet) {
         wallet = await Wallet.create({
-          userId: req.user.id,
-          balance: 0,
+            userId: req.user.id,
+            balance: 0,
           currency: user.preferredCurrency || 'NGN',
           isActive: true
         });
@@ -57,7 +57,7 @@ module.exports = {
   // Get wallet transaction history
   async getWalletTransactions(req, res) {
     try {
-      const {
+    const {
         page = 1,
         limit = 20,
         type,
@@ -184,7 +184,7 @@ module.exports = {
 
         // Create wallet transaction record
         await WalletTransaction.create({
-          userId: req.user.id,
+        userId: req.user.id,
           type: 'debit',
           amount: parseFloat(amount),
           currency: wallet.currency,
@@ -203,8 +203,8 @@ module.exports = {
         // TODO: Integrate with bank transfer service (Flutterwave, Paystack, etc.)
         // For now, we'll just mark it as pending
 
-        res.json({
-          success: true,
+      res.json({
+        success: true,
           data: {
             reference,
             amount: parseFloat(amount),

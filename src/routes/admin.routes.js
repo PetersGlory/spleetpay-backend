@@ -388,4 +388,4 @@ router.get('/users/:id', adminAuth, validate(schemas.uuidParam, 'params'), userC
 router.put('/users/:id', adminAuth, validate(schemas.uuidParam, 'params'), userController.updateUser);
 router.delete('/users/:id', adminAuth, validate(schemas.uuidParam, 'params'), userController.deleteUser);
 
-module.exports = router;
+module.exports = router; 

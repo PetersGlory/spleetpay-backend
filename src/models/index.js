@@ -76,7 +76,7 @@ const syncDatabase = async () => {
   try {
     // Disable foreign key checks for MySQL compatibility
     if (sequelize.getDialect() === 'mysql') {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
     }
     
     const alterOption = process.env.NODE_ENV === 'development';
@@ -100,7 +100,7 @@ const syncDatabase = async () => {
     
     // Re-enable foreign key checks for MySQL
     if (sequelize.getDialect() === 'mysql') {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
     }
     
     console.log('Database synced successfully');
