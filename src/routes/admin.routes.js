@@ -5,11 +5,6 @@ const transactionController = require('../controllers/transaction.controller');
 const merchantController = require('../controllers/merchant.controller');
 const userController = require('../controllers/user.controller');
 const { adminAuth } = require('../middleware/auth');
-const { validate, schemas } = require('../middleware/validation');
-const { api: rateLimit } = require('../middleware/rateLimiter');
-
-// Apply rate limiting to all admin routes
-router.use(rateLimit);
 
 /**
  * @swagger
@@ -156,7 +151,7 @@ router.get('/transactions', adminAuth, transactionController.getTransactions);
  *       404:
  *         description: Transaction not found
  */
-router.get('/transactions/:id', adminAuth, validate(schemas.uuidParam, 'params'), transactionController.getTransaction);
+router.get('/transactions/:id', adminAuth,transactionController.getTransaction);
 
 /**
  * @swagger
@@ -246,7 +241,7 @@ router.get('/merchants', adminAuth, merchantController.getAllMerchants);
  *       404:
  *         description: Merchant not found
  */
-router.put('/merchants/:id/approve', adminAuth, validate(schemas.uuidParam, 'params'), merchantController.approveMerchant);
+router.put('/merchants/:id/approve', adminAuth, merchantController.approveMerchant);
 
 /**
  * @swagger
@@ -384,8 +379,8 @@ router.get('/users', adminAuth, userController.getAllUsers);
  *       404:
  *         description: User not found
  */
-router.get('/users/:id', adminAuth, validate(schemas.uuidParam, 'params'), userController.getUserById);
-router.put('/users/:id', adminAuth, validate(schemas.uuidParam, 'params'), userController.updateUser);
-router.delete('/users/:id', adminAuth, validate(schemas.uuidParam, 'params'), userController.deleteUser);
+router.get('/users/:id', adminAuth, userController.getUserById);
+router.put('/users/:id', adminAuth, userController.updateUser);
+router.delete('/users/:id', adminAuth, userController.deleteUser);
 
 module.exports = router; 
