@@ -203,7 +203,6 @@ router.get('/wallet/transactions', walletController.getWalletTransactions);
  *               amount:
  *                 type: number
  *                 description: The amount to withdraw
- *               // Add withdrawal parameters here
  *     responses:
  *       200:
  *         description: Withdrawal successful
@@ -246,7 +245,6 @@ router.get('/wallet/stats', walletController.getWalletStats);
  *           schema:
  *             type: object
  *             properties:
- *               // Add payment request parameters here
  *     responses:
  *       201:
  *         description: Payment request created successfully
@@ -272,7 +270,6 @@ router.post('/payments/create', paymentRequestController.createPaymentRequest);
  *           schema:
  *             type: object
  *             properties:
- *               // Add group split payment parameters here
  *     responses:
  *       201:
  *         description: Group split payment request created successfully
