@@ -7,9 +7,18 @@ const Transaction = sequelize.define('Transaction', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  merchantId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'merchant_id',
+    references: {
+      model: 'merchants',
+      key: 'id'
+    }
+  },
   userId: {
     type: DataTypes.UUID,
-    allowNull: false,
+    allowNull: true,
     field: 'user_id',
     references: {
       model: 'users',
@@ -34,9 +43,47 @@ const Transaction = sequelize.define('Transaction', {
       key: 'id'
     }
   },
+  type: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  customerName: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'customer_name'
+  },
+  customerEmail: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'customer_email'
+  },
+  customerPhone: {
+    type: DataTypes.STRING(30),
+    allowNull: true,
+    field: 'customer_phone'
+  },
   amount: {
     type: DataTypes.DECIMAL(15, 2),
     allowNull: false
+  },
+  merchantFee: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: true,
+    field: 'merchant_fee'
+  },
+  gatewayFee: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: true,
+    field: 'gateway_fee'
+  },
+  netAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: true,
+    field: 'net_amount'
   },
   tipAmount: {
     type: DataTypes.DECIMAL(15, 2),
@@ -52,6 +99,16 @@ const Transaction = sequelize.define('Transaction', {
     allowNull: true,
     field: 'payment_method'
   },
+  paymentGateway: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'payment_gateway'
+  },
+  gatewayReference: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'gateway_reference'
+  },
   paymentProvider: {
     type: DataTypes.STRING(50),
     allowNull: true,
@@ -63,7 +120,7 @@ const Transaction = sequelize.define('Transaction', {
     field: 'provider_transaction_id'
   },
   status: {
-    type: DataTypes.ENUM('pending', 'processing', 'partial', 'completed', 'failed', 'refunded'),
+    type: DataTypes.ENUM('pending', 'processing', 'partial', 'completed', 'failed', 'refunded', 'cancelled'),
     defaultValue: 'pending'
   },
   reference: {
@@ -80,6 +137,11 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.JSON,
     allowNull: true,
     field: 'gateway_response'
+  },
+  expiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'expires_at'
   },
   metadata: {
     type: DataTypes.JSON,

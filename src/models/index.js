@@ -50,8 +50,13 @@ WalletTransaction.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'tra
 User.hasMany(Merchant, { foreignKey: 'userId', as: 'merchants' });
 Merchant.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-Merchant.hasMany(GroupSplitContributor, { foreignKey: 'merchantId', as: 'groupSplitContributions' });
-GroupSplitContributor.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
+// Merchant ↔ Transaction
+Merchant.hasMany(Transaction, { foreignKey: 'merchantId', as: 'transactions' });
+Transaction.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
+
+// Transaction ↔ GroupSplitContributor
+Transaction.hasMany(GroupSplitContributor, { foreignKey: 'transactionId', as: 'contributors' });
+GroupSplitContributor.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
 
 Merchant.hasMany(Settlement, { foreignKey: 'merchantId', as: 'settlements' });
 Settlement.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });

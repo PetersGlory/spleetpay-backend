@@ -106,7 +106,7 @@ module.exports = {
 
       // Get transaction with contributors if group split
       const transactionWithContributors = await Transaction.findByPk(transaction.id, {
-        include: type === 'group_split' ? ['contributors'] : []
+        include: type === 'group_split' ? [{ association: 'contributors' }] : []
       });
 
       res.status(201).json({
@@ -172,15 +172,8 @@ module.exports = {
       const { count, rows } = await Transaction.findAndCountAll({
         where: whereClause,
         include: [
-          {
-            model: Merchant,
-            attributes: ['businessName', 'businessEmail']
-          },
-          {
-            model: GroupSplitContributor,
-            as: 'contributors',
-            required: false
-          }
+          { association: 'merchant', attributes: ['businessName', 'businessEmail'] },
+          { association: 'contributors', required: false }
         ],
         limit: parseInt(limit),
         offset: parseInt(offset),
@@ -227,15 +220,8 @@ module.exports = {
       const transaction = await Transaction.findOne({
         where: whereClause,
         include: [
-          {
-            model: Merchant,
-            attributes: ['businessName', 'businessEmail', 'businessPhone']
-          },
-          {
-            model: GroupSplitContributor,
-            as: 'contributors',
-            required: false
-          }
+          { association: 'merchant', attributes: ['businessName', 'businessEmail', 'businessPhone'] },
+          { association: 'contributors', required: false }
         ]
       });
 
@@ -282,7 +268,7 @@ module.exports = {
 
       const transaction = await Transaction.findOne({
         where: whereClause,
-        include: ['merchant']
+        include: [{ association: 'merchant' }]
       });
 
       if (!transaction) {
@@ -390,7 +376,7 @@ module.exports = {
       // Find transaction by reference
       const transaction = await Transaction.findOne({
         where: { reference },
-        include: ['contributors']
+        include: [{ association: 'contributors' }, { association: 'merchant' }]
       });
 
       if (!transaction) {
@@ -456,13 +442,13 @@ module.exports = {
       const { id } = req.params;
       const merchantId = req.user.merchantId || req.adminUser?.merchantId;
 
+      const where = { id, type: 'group_split' };
+      if (!req.adminUser && merchantId) {
+        where.merchantId = merchantId;
+      }
       const transaction = await Transaction.findOne({
-        where: { 
-          id,
-          merchantId: req.adminUser ? undefined : merchantId,
-          type: 'group_split'
-        },
-        include: ['contributors', 'merchant']
+        where,
+        include: [{ association: 'contributors' }, { association: 'merchant' }]
       });
 
       if (!transaction) {
