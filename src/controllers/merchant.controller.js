@@ -1,4 +1,5 @@
 const { Merchant, User, KYCDocument, Director, Transaction, QRCode } = require('../models');
+const cloudinary = require('cloudinary').v2;
 const emailService = require('../services/email.service');
 const qrCodeService = require('../services/qrCode.service');
 const { Op } = require('sequelize');
@@ -171,12 +172,38 @@ module.exports = {
         });
       }
 
+      // Resolve file URL: if using in-memory storage, upload to Cloudinary
+      let fileUrl = file.location || file.path;
+      if (!fileUrl && file.buffer) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const upload = cloudinary.uploader.upload_stream(
+            { folder: 'kyc_documents', resource_type: 'auto' },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            }
+          );
+          upload.end(file.buffer);
+        });
+        fileUrl = uploadResult.secure_url;
+      }
+
+      if (!fileUrl) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'UPLOAD_FAILED',
+            message: 'Unable to process uploaded file'
+          }
+        });
+      }
+
       // Create KYC document record
       const kycDocument = await KYCDocument.create({
         merchantId: merchant.id,
         documentType,
         fileName: file.originalname,
-        fileUrl: file.location || file.path, // AWS S3 URL or local path
+        fileUrl,
         fileSize: file.size,
         mimeType: file.mimetype,
         status: 'pending'
@@ -358,22 +385,22 @@ module.exports = {
         });
       }
 
-      // Get transaction statistics
+      // Get transaction statistics (Transaction model is keyed by userId, not merchantId)
       const [
         totalTransactions,
         completedTransactions,
         totalRevenue,
         pendingAmount
       ] = await Promise.all([
-        Transaction.count({ where: { merchantId: merchant.id } }),
-        Transaction.count({ where: { merchantId: merchant.id, status: 'completed' } }),
-        Transaction.sum('amount', { where: { merchantId: merchant.id, status: 'completed' } }),
-        Transaction.sum('amount', { where: { merchantId: merchant.id, status: 'pending' } })
+        Transaction.count({ where: { userId: merchant.userId } }),
+        Transaction.count({ where: { userId: merchant.userId, status: 'completed' } }),
+        Transaction.sum('amount', { where: { userId: merchant.userId, status: 'completed' } }),
+        Transaction.sum('amount', { where: { userId: merchant.userId, status: 'pending' } })
       ]);
 
       // Get recent transactions
       const recentTransactions = await Transaction.findAll({
-        where: { merchantId: merchant.id },
+        where: { userId: merchant.userId },
         order: [['createdAt', 'DESC']],
         limit: 5,
         attributes: ['id', 'reference', 'amount', 'status', 'type', 'createdAt']
