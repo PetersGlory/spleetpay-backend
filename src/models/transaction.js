@@ -63,8 +63,18 @@ const Transaction = sequelize.define('Transaction', {
     field: 'provider_transaction_id'
   },
   status: {
-    type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed', 'refunded'),
+    type: DataTypes.ENUM('pending', 'processing', 'partial', 'completed', 'failed', 'refunded'),
     defaultValue: 'pending'
+  },
+  reference: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    unique: true
+  },
+  pspResponse: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'psp_response'
   },
   gatewayResponse: {
     type: DataTypes.JSON,
