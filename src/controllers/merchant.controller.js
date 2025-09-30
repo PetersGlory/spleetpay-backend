@@ -403,7 +403,7 @@ module.exports = {
         where: { userId: merchant.userId },
         order: [['createdAt', 'DESC']],
         limit: 5,
-        attributes: ['id', 'reference', 'amount', 'status', 'type', 'createdAt']
+        attributes: ['id', 'amount', 'status', 'type', 'createdAt']
       });
 
       res.json({
