@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 const paymentService = require('../services/payment.service');
 const qrCodeService = require('../services/qrCode.service');
+const emailService = require('../services/email.service');
 
 module.exports = {
   // Create new payment request (Pay for Me)
@@ -139,6 +140,25 @@ module.exports = {
       // Generate QR code
       const qrCodeUrl = await qrCodeService.generateQRCode(paymentLink);
       await paymentRequest.update({ qrCodeUrl });
+
+      // Send payment request emails to participants
+      try {
+        const emailPromises = createdParticipants
+          .filter(p => !!p.email)
+          .map(p => emailService.sendPaymentRequestEmail({
+            contributorEmail: p.email,
+            contributorName: p.name,
+            amount: p.amount,
+            currency: paymentRequest.currency,
+            description,
+            paymentUrl: p.participantLink,
+            merchantName: req.user?.businessName || 'SpleetPay',
+            expiresAt: paymentRequest.expiresAt
+          }));
+        await Promise.all(emailPromises);
+      } catch (e) {
+        console.error('Error sending participant payment emails:', e);
+      }
       
       const result = await PaymentRequest.findByPk(paymentRequest.id, {
         include: [{
