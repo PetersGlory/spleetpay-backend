@@ -1,7 +1,7 @@
 const paymentService = require('../services/payment.service');
 const webSocketService = require('../services/websocket.service');
 const walletController = require('./wallet.controller');
-const { Transaction, PaymentRequest, SplitParticipant, WalletTransaction } = require('../models');
+const { Transaction, PaymentRequest, SplitParticipant, WalletTransaction, GroupSplitContributor } = require('../models');
 
 module.exports = {
   // Handle Paystack webhooks
@@ -45,14 +45,8 @@ module.exports = {
         const transaction = await Transaction.findOne({
           where: { providerTransactionId: data.reference },
           include: [
-            {
-              model: PaymentRequest,
-              as: 'paymentRequest'
-            },
-            {
-              model: SplitParticipant,
-              as: 'participant'
-            }
+            { association: 'paymentRequest' },
+            { association: 'participant' }
           ]
         });
 
@@ -209,7 +203,7 @@ module.exports = {
 
       // Check if all contributors have paid
       const transaction = await Transaction.findByPk(transactionId, {
-        include: ['contributors']
+        include: [{ association: 'contributors' }]
       });
 
       const remainingContributors = await GroupSplitContributor.count({

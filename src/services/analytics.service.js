@@ -185,7 +185,7 @@ class AnalyticsService {
         ],
         where: { ...whereClause, status: 'completed' },
         include: [{
-          model: Merchant,
+          association: 'merchant',
           attributes: ['businessName'],
           required: true
         }],
@@ -245,7 +245,7 @@ class AnalyticsService {
           })),
           topMerchants: topMerchants.map(merchant => ({
             merchantId: merchant.merchantId,
-            businessName: merchant.Merchant?.businessName,
+            businessName: merchant.merchant?.businessName,
             transactionCount: parseInt(merchant.dataValues.transactionCount),
             totalRevenue: parseFloat(merchant.dataValues.totalRevenue) || 0
           })),
@@ -306,7 +306,7 @@ class AnalyticsService {
         offset: parseInt(offset),
         order: [['createdAt', 'DESC']],
         include: [{
-          model: Merchant,
+          association: 'merchant',
           attributes: ['businessName'],
           required: false
         }]
