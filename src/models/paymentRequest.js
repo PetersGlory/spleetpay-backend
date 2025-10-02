@@ -44,7 +44,7 @@ const PaymentRequest = sequelize.define('PaymentRequest', {
     field: 'payment_link'
   },
   qrCodeUrl: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.TEXT,
     allowNull: true,
     field: 'qr_code_url'
   },
