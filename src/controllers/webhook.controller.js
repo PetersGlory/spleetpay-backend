@@ -53,7 +53,7 @@ module.exports = {
         if (transaction) {
           // Credit user wallet
           await walletController.creditWallet(
-            transaction.userId,
+            transaction.userId || transaction.merchantId || null,
             transaction.amount,
             transaction.currency,
             `Payment received from ${transaction.participant?.name || 'participant'}`,

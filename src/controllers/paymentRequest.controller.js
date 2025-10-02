@@ -18,11 +18,11 @@ module.exports = {
         const paymentLink = `${process.env.PAYMENT_LINK_DOMAIN}/p/${linkToken}`;
         
         const paymentRequest = await PaymentRequest.create({
-          userId: req.user.id,
+          userId: req.user?.id || null,
           type: 'pay_for_me',
           description,
           amount,
-          currency: currency || req.user.preferredCurrency,
+          currency: currency || req.user?.preferredCurrency || 'NGN',
           expiresAt,
           paymentLink,
           linkToken,
@@ -104,11 +104,11 @@ module.exports = {
       const paymentLink = `${process.env.PAYMENT_LINK_DOMAIN}/p/${linkToken}`;
       
       const paymentRequest = await PaymentRequest.create({
-        userId: req.user.id,
+        userId: req.user?.id || null,
         type: 'group_split',
         description,
         amount: totalAmount,
-        currency: currency || req.user.preferredCurrency,
+        currency: currency || req.user?.preferredCurrency || 'NGN',
         expiresAt,
         paymentLink,
         linkToken,
