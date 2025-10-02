@@ -19,8 +19,8 @@ const Wallet = require('./wallet');
 
 // Define associations
 // User associations
-User.hasMany(PaymentRequest, { foreignKey: 'userId', as: 'paymentRequests' });
-PaymentRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// User.hasMany(PaymentRequest, { foreignKey: 'userId', as: 'paymentRequests' });
+// PaymentRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
 Transaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
