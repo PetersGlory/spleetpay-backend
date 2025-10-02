@@ -13,6 +13,84 @@ const { auth } = require('../middleware/auth');
  *   description: User-related operations
  */
 
+
+
+// Payment Request Routes
+/**
+ * @swagger
+ * /users/payments/create:
+ *   post:
+ *     tags: [User]
+ *     summary: Create payment request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *     responses:
+ *       201:
+ *         description: Payment request created successfully
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/payments/create', paymentRequestController.createPaymentRequest);
+
+/**
+ * @swagger
+ * /users/payments/split/create:
+ *   post:
+ *     tags: [User]
+ *     summary: Create group split payment request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *     responses:
+ *       201:
+ *         description: Group split payment request created successfully
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/payments/split/create', paymentRequestController.createGroupSplitPayment);
+
+/**
+ * @swagger
+ * /users/payments/{paymentId}:
+ *   get:
+ *     tags: [User]
+ *     summary: Get payment request by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: paymentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the payment request
+ *     responses:
+ *       200:
+ *         description: Payment request retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/payments/:paymentId', paymentRequestController.getPaymentRequest);
+
+
+
 // All routes require authentication
 router.use(auth);
 
@@ -228,80 +306,6 @@ router.post('/wallet/withdraw', walletController.withdrawFromWallet);
  *         description: Unauthorized
  */
 router.get('/wallet/stats', walletController.getWalletStats);
-
-// Payment Request Routes
-/**
- * @swagger
- * /users/payments/create:
- *   post:
- *     tags: [User]
- *     summary: Create payment request
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *     responses:
- *       201:
- *         description: Payment request created successfully
- *       400:
- *         description: Bad Request
- *       401:
- *         description: Unauthorized
- */
-router.post('/payments/create', paymentRequestController.createPaymentRequest);
-
-/**
- * @swagger
- * /users/payments/split/create:
- *   post:
- *     tags: [User]
- *     summary: Create group split payment request
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *     responses:
- *       201:
- *         description: Group split payment request created successfully
- *       400:
- *         description: Bad Request
- *       401:
- *         description: Unauthorized
- */
-router.post('/payments/split/create', paymentRequestController.createGroupSplitPayment);
-
-/**
- * @swagger
- * /users/payments/{paymentId}:
- *   get:
- *     tags: [User]
- *     summary: Get payment request by ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: paymentId
- *         required: true
- *         schema:
- *           type: string
- *         description: The ID of the payment request
- *     responses:
- *       200:
- *         description: Payment request retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/payments/:paymentId', paymentRequestController.getPaymentRequest);
 
 /**
  * @swagger
