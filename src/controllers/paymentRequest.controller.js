@@ -31,7 +31,7 @@ module.exports = {
         });
         
         // Generate QR code
-        const qrCodeUrl = await qrCodeService.generateQRCode(paymentLink);
+        const qrCodeUrl = await qrCodeService.generateQRCodeDataURL(paymentLink);
         await paymentRequest.update({ qrCodeUrl });
         
         res.status(201).json({
@@ -138,7 +138,7 @@ module.exports = {
       }
       
       // Generate QR code
-      const qrCodeUrl = await qrCodeService.generateQRCode(paymentLink);
+      const qrCodeUrl = await qrCodeService.generateQRCodeDataURL(paymentLink);
       await paymentRequest.update({ qrCodeUrl });
 
       // Send payment request emails to participants
