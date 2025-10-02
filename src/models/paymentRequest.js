@@ -10,11 +10,7 @@ const PaymentRequest = sequelize.define('PaymentRequest', {
   userId: {
     type: DataTypes.UUID,
     allowNull: true,
-    field: 'user_id',
-    references: {
-      model: 'users',
-      key: 'id'
-    }
+    field: 'user_id'
   },
   type: {
     type: DataTypes.ENUM('pay_for_me', 'group_split'),
