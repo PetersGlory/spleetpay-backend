@@ -78,9 +78,6 @@ const PaymentRequest = sequelize.define('PaymentRequest', {
   tableName: 'payment_requests',
   indexes: [
     {
-      fields: ['user_id']
-    },
-    {
       fields: ['payment_link']
     },
     {
