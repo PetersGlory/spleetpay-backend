@@ -192,11 +192,6 @@ module.exports = {
       const paymentRequest = await PaymentRequest.findByPk(paymentId, {
         include: [
           {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'firstName', 'lastName', 'email']
-          },
-          {
             model: SplitParticipant,
             as: 'participants'
           }
@@ -250,11 +245,6 @@ module.exports = {
       const paymentRequest = await PaymentRequest.findOne({
         where: { linkToken },
         include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'firstName', 'lastName', 'email']
-          },
           {
             model: SplitParticipant,
             as: 'participants'
