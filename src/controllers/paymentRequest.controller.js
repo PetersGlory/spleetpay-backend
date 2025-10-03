@@ -128,7 +128,7 @@ module.exports = {
           paymentRequestId: paymentRequest.id,
           name: participant.name,
           email: participant.email,
-          phone: participant.phone,
+          phone: participant.phone || null,
           amount: participant.amount,
           participantLink,
           linkToken: participantLinkToken
