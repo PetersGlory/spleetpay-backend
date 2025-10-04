@@ -156,6 +156,7 @@ module.exports = {
             expiresAt: paymentRequest.expiresAt
           }));
         await Promise.all(emailPromises);
+        console.log("Message sent !!!")
       } catch (e) {
         console.error('Error sending participant payment emails:', e);
       }
