@@ -177,6 +177,8 @@ class AnalyticsService {
       });
 
       // Get merchant performance (top 10)
+      // Fix MySQL error: group by must use column names as they exist in the DB (snake_case), not model field names (camelCase)
+      // Also, use correct include syntax for the merchant association
       const topMerchants = await Transaction.findAll({
         attributes: [
           'merchantId',
@@ -185,11 +187,12 @@ class AnalyticsService {
         ],
         where: { ...whereClause, status: 'completed' },
         include: [{
-          association: 'merchant',
+          model: Merchant,
+          as: 'merchant',
           attributes: ['businessName'],
           required: true
         }],
-        group: ['Transaction.merchantId', 'Merchant.id'],
+        group: ['Transaction.merchant_id', 'merchant.id'],
         order: [[sequelize.fn('SUM', sequelize.col('Transaction.amount')), 'DESC']],
         limit: 10
       });

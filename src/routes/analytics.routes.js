@@ -66,7 +66,7 @@ router.get('/revenue', auth, analyticsController.getRevenueAnalytics);
 // Admin analytics
 /**
  * @swagger
- * /admin/analytics/dashboard:
+ * /analytics/admin/dashboard:
  *   get:
  *     tags: [Analytics]
  *     summary: Get admin dashboard analytics
@@ -83,7 +83,7 @@ router.get('/admin/dashboard', adminAuth, analyticsController.getAdminDashboard)
 
 /**
  * @swagger
- * /admin/analytics/transactions:
+ * /analytics/admin/transactions:
  *   get:
  *     tags: [Analytics]
  *     summary: Get admin transaction analytics
@@ -100,7 +100,7 @@ router.get('/admin/transactions', adminAuth, analyticsController.getTransactionA
 
 /**
  * @swagger
- * /admin/analytics/revenue:
+ * /admin/revenue:
  *   get:
  *     tags: [Analytics]
  *     summary: Get admin revenue analytics
@@ -113,7 +113,7 @@ router.get('/admin/transactions', adminAuth, analyticsController.getTransactionA
  *       401:
  *         description: Unauthorized
  */
-router.get('/admin/revenue', adminAuth, analyticsController.getRevenueAnalytics);
+router.get('/analytics/admin/revenue', adminAuth, analyticsController.getRevenueAnalytics);
 
 /**
  * @swagger

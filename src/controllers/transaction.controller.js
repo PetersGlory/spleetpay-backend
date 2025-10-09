@@ -139,7 +139,7 @@ module.exports = {
         search
       } = req.query;
 
-      const merchantId = req.user.merchantId || req.adminUser?.merchantId;
+      const merchantId = req.user?.merchantId || req.adminUser?.merchantId;
       const whereClause = {};
 
       // Apply merchant filter for non-admin users
