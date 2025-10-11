@@ -16,6 +16,7 @@ const Director = require('./director');
 const Refund = require('./refund');
 const Dispute = require('./dispute');
 const Wallet = require('./wallet');
+const PaymentRate = require('./paymentRate');
 
 // Define associations
 // User associations
@@ -102,6 +103,7 @@ const syncDatabase = async () => {
     await Refund.sync({ alter: alterOption });
     await Dispute.sync({ alter: alterOption });
     await Wallet.sync({ alter: alterOption });
+    await PaymentRate.sync({alter:alterOption});
     
     // Re-enable foreign key checks for MySQL
     if (sequelize.getDialect() === 'mysql') {
@@ -132,5 +134,6 @@ module.exports = {
   Refund,
   Dispute,
   Wallet,
+  PaymentRate,
   syncDatabase
 };

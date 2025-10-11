@@ -16,6 +16,7 @@ const merchantRoutes = require('./routes/merchant.routes');
 const qrCodeRoutes = require('./routes/qrCode.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const webhookRoutes = require('./routes/webhook.routes');
+const paymentRateRoutes = require('./routes/paymentRate.routes');
 const adminRoutes = require('./routes/admin.routes');
 const errorHandler = require('./middleware/errorHandler');
 const setupSwagger = require('./swagger');
@@ -67,6 +68,10 @@ app.use('/api/qr-codes', qrCodeRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment-rate', paymentRateRoutes);
+
+
+
 
 // Register Swagger docs
 setupSwagger(app);
