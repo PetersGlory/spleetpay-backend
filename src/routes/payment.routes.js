@@ -31,7 +31,7 @@ const paymentRequestController = require('../controllers/paymentRequest.controll
  *       404:
  *         description: Payment not found
  */
-router.get('/link/:linkToken', paymentRequestContrroller.getPaymentByLink);
+router.get('/link/:linkToken', paymentRequestController.getPaymentByLink);
 
 /**
  * @swagger
