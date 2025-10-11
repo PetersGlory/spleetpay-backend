@@ -242,8 +242,9 @@ module.exports = {
   async getPaymentByLink(req, res) {
     try {
       const { linkToken } = req.params;
-      
-      const paymentRequest = await PaymentRequest.findOne({
+
+      // Try to find payment by linkToken on PaymentRequest first
+      let paymentRequest = await PaymentRequest.findOne({
         where: { linkToken },
         include: [
           {
@@ -252,7 +253,31 @@ module.exports = {
           }
         ]
       });
-      
+
+      // If not found, try to find on SplitParticipant (user/participant link)
+      if (!paymentRequest) {
+        const participant = await SplitParticipant.findOne({
+          where: { linkToken },
+          include: [
+            {
+              model: PaymentRequest,
+              as: 'paymentRequest',
+              include: [
+                {
+                  model: SplitParticipant,
+                  as: 'participants'
+                }
+              ]
+            }
+          ]
+        });
+
+        if (participant && participant.paymentRequest) {
+          paymentRequest = participant.paymentRequest;
+        }
+      }
+
+      // Still not found, return not found error
       if (!paymentRequest) {
         return res.status(404).json({
           success: false,
@@ -262,7 +287,7 @@ module.exports = {
           }
         });
       }
-      
+
       // Check if expired
       if (paymentRequest.expiresAt && new Date() > paymentRequest.expiresAt) {
         return res.status(410).json({
@@ -273,7 +298,7 @@ module.exports = {
           }
         });
       }
-      
+
       // Calculate total collected
       const transactions = await Transaction.findAll({
         where: {
@@ -281,9 +306,9 @@ module.exports = {
           status: 'completed'
         }
       });
-      
+
       const totalCollected = transactions.reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-      
+
       res.json({
         success: true,
         data: {
