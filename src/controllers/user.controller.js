@@ -330,6 +330,12 @@ module.exports = {
       const { count, rows } = await User.findAndCountAll({
         where: whereClause,
         attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires', 'verificationToken'] },
+        include: [
+          {
+            model: Transaction,
+            as: 'transactions'
+          }
+        ],
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['createdAt', 'DESC']]

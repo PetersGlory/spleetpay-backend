@@ -215,6 +215,14 @@ class AnalyticsService {
         order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']]
       });
 
+      const recentTransactions = await Transaction.findAll({
+        where:{
+          createdAt:{
+            [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          }
+        }
+      });
+
       // Get KYC status breakdown
       const kycStatusBreakdown = await Merchant.findAll({
         attributes: [
@@ -257,6 +265,7 @@ class AnalyticsService {
             transactionCount: parseInt(day.dataValues.transactionCount),
             volume: parseFloat(day.dataValues.volume) || 0
           })),
+          recentTransactions,
           kycStatusBreakdown: kycStatusBreakdown.map(status => ({
             status: status.kycStatus,
             count: parseInt(status.dataValues.count)
