@@ -348,7 +348,7 @@ module.exports = {
       }
 
       // Generate new API key
-      const apiKey = `sk_live_${crypto.randomBytes(32).toString('hex')}`;
+      const apiKey = `sl_py_live_${crypto.randomBytes(32).toString('hex')}`;
 
       await merchant.update({ apiKey });
 

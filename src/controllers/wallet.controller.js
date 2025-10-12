@@ -396,5 +396,118 @@ module.exports = {
         }
       });
     }
+  },
+
+  // Get all wallets (admin)
+  async getAllWallets(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        userId,
+        currency
+      } = req.query;
+
+      const whereClause = {};
+
+      if (userId) whereClause.userId = userId;
+      if (currency) whereClause.currency = currency;
+
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await Wallet.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'email', 'firstName', 'lastName']
+          }
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['updatedAt', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          wallets: rows,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get all wallets error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch wallets'
+        }
+      });
+    }
+  },
+
+  // Update wallet balance (admin)
+  async updateWalletBalance(req, res) {
+    try {
+      const { userId } = req.params;
+      const { balance, reason } = req.body;
+
+      if (!balance && balance !== 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Balance is required'
+          }
+        });
+      }
+
+      const wallet = await Wallet.findOne({ where: { userId } });
+      if (!wallet) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Wallet not found'
+          }
+        });
+      }
+
+      const oldBalance = wallet.balance;
+      await wallet.update({ balance: parseFloat(balance) });
+
+      // Create wallet transaction record for admin update
+      await WalletTransaction.create({
+        userId,
+        type: balance > oldBalance ? 'credit' : 'debit',
+        amount: Math.abs(parseFloat(balance) - parseFloat(oldBalance)),
+        currency: wallet.currency,
+        description: reason || 'Admin balance adjustment',
+        balanceAfter: parseFloat(balance),
+        reference: `ADMIN_ADJ_${Date.now()}`
+      });
+
+      res.json({
+        success: true,
+        data: wallet,
+        message: 'Wallet balance updated successfully'
+      });
+    } catch (error) {
+      console.error('Update wallet balance error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update wallet balance'
+        }
+      });
+    }
   }
 };

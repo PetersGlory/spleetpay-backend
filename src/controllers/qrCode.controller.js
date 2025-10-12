@@ -404,5 +404,62 @@ module.exports = {
         }
       });
     }
+  },
+
+  // Get all QR codes (admin)
+  async getAllQRCodes(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        merchantId,
+        type,
+        isActive
+      } = req.query;
+
+      const whereClause = {};
+
+      if (merchantId) whereClause.merchantId = merchantId;
+      if (type) whereClause.type = type;
+      if (isActive !== undefined) whereClause.isActive = isActive === 'true';
+
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await QRCode.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: Merchant,
+            as: 'merchant',
+            attributes: ['id', 'businessName', 'businessEmail']
+          }
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          qrCodes: rows,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get all QR codes error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch QR codes'
+        }
+      });
+    }
   }
 };
