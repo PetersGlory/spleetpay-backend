@@ -17,6 +17,9 @@ const Refund = require('./refund');
 const Dispute = require('./dispute');
 const Wallet = require('./wallet');
 const PaymentRate = require('./paymentRate');
+const AdminPermission = require('./adminPermission');
+const AdminSetting = require('./adminSetting');
+const AuditLog = require('./auditLog');
 
 // Define associations
 // User associations
@@ -77,6 +80,16 @@ Refund.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' }
 Transaction.hasOne(Dispute, { foreignKey: 'transactionId', as: 'dispute' });
 Dispute.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
 
+// Admin associations
+AdminUser.hasMany(AdminPermission, { foreignKey: 'adminId', as: 'adminPermissions' });
+AdminPermission.belongsTo(AdminUser, { foreignKey: 'adminId', as: 'admin' });
+
+AdminUser.hasMany(AdminSetting, { foreignKey: 'updatedBy', as: 'updatedSettings' });
+AdminSetting.belongsTo(AdminUser, { foreignKey: 'updatedBy', as: 'updatedByAdmin' });
+
+AdminUser.hasMany(AuditLog, { foreignKey: 'adminId', as: 'auditLogs' });
+AuditLog.belongsTo(AdminUser, { foreignKey: 'adminId', as: 'admin' });
+
 // Sync all models with database
 const syncDatabase = async () => {
   try {
@@ -103,7 +116,10 @@ const syncDatabase = async () => {
     await Refund.sync({ alter: alterOption });
     await Dispute.sync({ alter: alterOption });
     await Wallet.sync({ alter: alterOption });
-    await PaymentRate.sync({alter:alterOption});
+    await PaymentRate.sync({ alter: alterOption });
+    await AdminPermission.sync({ alter: alterOption });
+    await AdminSetting.sync({ alter: alterOption });
+    await AuditLog.sync({ alter: alterOption });
     
     // Re-enable foreign key checks for MySQL
     if (sequelize.getDialect() === 'mysql') {
@@ -135,5 +151,8 @@ module.exports = {
   Dispute,
   Wallet,
   PaymentRate,
+  AdminPermission,
+  AdminSetting,
+  AuditLog,
   syncDatabase
 };

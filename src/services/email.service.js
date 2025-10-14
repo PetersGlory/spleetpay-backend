@@ -416,6 +416,163 @@ class EmailService {
       html
     });
   }
+
+  /**
+   * Send admin welcome email
+   * @param {Object} adminData - Admin data
+   * @returns {Promise<Object>} Send result
+   */
+  async sendAdminWelcomeEmail(adminData) {
+    const { email, name, temporaryPassword, role } = adminData;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Welcome to SpleetPay Admin</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #1F2937; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .credentials { background: #F3F4F6; padding: 15px; border-radius: 6px; margin: 20px 0; }
+          .password { font-family: monospace; font-size: 18px; font-weight: bold; color: #DC2626; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+          .warning { background: #FEF3C7; border: 1px solid #F59E0B; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Welcome to SpleetPay Admin</h1>
+            <h2>Your Administrator Account Has Been Created</h2>
+          </div>
+          <div class="content">
+            <h3>Hello ${name},</h3>
+            <p>Welcome to the SpleetPay admin team! Your administrator account has been successfully created with the role of <strong>${role}</strong>.</p>
+            
+            <div class="credentials">
+              <h4>Your Login Credentials:</h4>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Temporary Password:</strong> <span class="password">${temporaryPassword}</span></p>
+            </div>
+            
+            <div class="warning">
+              <p><strong>⚠️ Important Security Notice:</strong></p>
+              <ul>
+                <li>This is a temporary password that expires in 24 hours</li>
+                <li>You must change your password on first login</li>
+                <li>Keep your credentials secure and never share them</li>
+                <li>Use strong, unique passwords for your account</li>
+              </ul>
+            </div>
+            
+            <h4>Getting Started:</h4>
+            <ol>
+              <li>Log in to the admin dashboard using the credentials above</li>
+              <li>Change your temporary password immediately</li>
+              <li>Review your assigned permissions and role</li>
+              <li>Familiarize yourself with the admin interface</li>
+            </ol>
+            
+            <p>If you have any questions or need assistance, please contact the system administrator.</p>
+            
+            <p>Welcome aboard!</p>
+            
+            <p>Best regards,<br>The SpleetPay Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2024 SpleetPay. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: email,
+      subject: 'Welcome to SpleetPay Admin - Account Created',
+      html
+    });
+  }
+
+  /**
+   * Send admin password reset email
+   * @param {Object} adminData - Admin data
+   * @returns {Promise<Object>} Send result
+   */
+  async sendAdminPasswordResetEmail(adminData) {
+    const { email, name, temporaryPassword } = adminData;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Password Reset - SpleetPay Admin</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #DC2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .credentials { background: #F3F4F6; padding: 15px; border-radius: 6px; margin: 20px 0; }
+          .password { font-family: monospace; font-size: 18px; font-weight: bold; color: #DC2626; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+          .warning { background: #FEF3C7; border: 1px solid #F59E0B; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔒 Password Reset Request</h1>
+            <h2>Your Admin Password Has Been Reset</h2>
+          </div>
+          <div class="content">
+            <h3>Hello ${name},</h3>
+            <p>Your administrator password has been reset by a system administrator. Please use the new temporary password below to log in.</p>
+            
+            <div class="credentials">
+              <h4>Your New Login Credentials:</h4>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>New Temporary Password:</strong> <span class="password">${temporaryPassword}</span></p>
+            </div>
+            
+            <div class="warning">
+              <p><strong>⚠️ Important Security Notice:</strong></p>
+              <ul>
+                <li>This is a temporary password that expires in 24 hours</li>
+                <li>You must change your password on next login</li>
+                <li>If you did not request this reset, contact the system administrator immediately</li>
+                <li>Keep your new credentials secure</li>
+              </ul>
+            </div>
+            
+            <h4>Next Steps:</h4>
+            <ol>
+              <li>Log in to the admin dashboard using the new credentials</li>
+              <li>Change your temporary password to a secure one</li>
+              <li>Consider enabling two-factor authentication for added security</li>
+            </ol>
+            
+            <p>If you have any questions or concerns, please contact the system administrator.</p>
+            
+            <p>Best regards,<br>The SpleetPay Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2024 SpleetPay. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: email,
+      subject: 'Password Reset - SpleetPay Admin',
+      html
+    });
+  }
 }
 
 module.exports = new EmailService();

@@ -18,6 +18,7 @@ const analyticsRoutes = require('./routes/analytics.routes');
 const webhookRoutes = require('./routes/webhook.routes');
 const paymentRateRoutes = require('./routes/paymentRate.routes');
 const adminRoutes = require('./routes/admin.routes');
+const settingsRoutes = require('./routes/adminSettings.routes.js')
 const errorHandler = require('./middleware/errorHandler');
 const setupSwagger = require('./swagger');
 
@@ -69,7 +70,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment-rate', paymentRateRoutes);
-
+app.use('/api/admin/settings',settingsRoutes);
 
 
 

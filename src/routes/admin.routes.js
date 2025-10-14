@@ -7,6 +7,7 @@ const userController = require('../controllers/user.controller');
 const paymentRateController = require('../controllers/paymentRate.controller');
 const walletController = require('../controllers/wallet.controller');
 const qrCodeController = require('../controllers/qrCode.controller');
+const adminSettingsRoutes = require('./adminSettings.routes');
 const { adminAuth } = require('../middleware/auth');
 
 /**
@@ -1133,5 +1134,8 @@ router.get('/analytics/revenue', adminAuth, analyticsController.getRevenueAnalyt
  *         description: Forbidden - Admin access required
  */
 router.post('/analytics/reports', adminAuth, analyticsController.generateReport);
+
+// Admin Settings Routes
+router.use('/settings', adminSettingsRoutes);
 
 module.exports = router; 
