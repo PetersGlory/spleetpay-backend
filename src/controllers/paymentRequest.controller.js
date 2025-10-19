@@ -508,5 +508,109 @@ module.exports = {
         }
       });
     }
+  },
+
+  // Admin: Get all group payments
+  async getAllGroupPayments(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        status,
+        startDate,
+        endDate,
+        userId,
+        search
+      } = req.query;
+
+      const whereClause = {
+        type: 'group_split'
+      };
+
+      // Apply filters
+      if (status) whereClause.status = status;
+      if (userId) whereClause.userId = userId;
+      if (startDate || endDate) {
+        whereClause.createdAt = {};
+        if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+        if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+      }
+
+      // Add search functionality for description
+      if (search) {
+        whereClause.description = {
+          [Op.iLike]: `%${search}%`
+        };
+      }
+
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await PaymentRequest.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: SplitParticipant,
+            as: 'participants',
+            attributes: ['id', 'name', 'email', 'amount', 'hasPaid', 'paidAmount', 'paidAt', 'paymentMethod']
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'firstName', 'lastName', 'email', 'phone']
+          }
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
+      });
+
+      // Calculate additional statistics for each group payment
+      const groupPaymentsWithStats = await Promise.all(
+        rows.map(async (payment) => {
+          // Get total collected amount from transactions
+          const transactions = await Transaction.findAll({
+            where: {
+              paymentRequestId: payment.id,
+              status: 'completed'
+            }
+          });
+
+          const totalCollected = transactions.reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+          const paidParticipants = payment.participants.filter(p => p.hasPaid).length;
+          const totalParticipants = payment.participants.length;
+          const completionPercentage = totalParticipants > 0 ? (paidParticipants / totalParticipants) * 100 : 0;
+
+          return {
+            ...payment.toJSON(),
+            totalCollected,
+            paidParticipants,
+            totalParticipants,
+            completionPercentage: Math.round(completionPercentage * 100) / 100
+          };
+        })
+      );
+
+      res.json({
+        success: true,
+        data: {
+          groupPayments: groupPaymentsWithStats,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get all group payments error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch group payments'
+        }
+      });
+    }
   }
 };

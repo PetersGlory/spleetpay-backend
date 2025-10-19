@@ -7,6 +7,7 @@ const userController = require('../controllers/user.controller');
 const paymentRateController = require('../controllers/paymentRate.controller');
 const walletController = require('../controllers/wallet.controller');
 const qrCodeController = require('../controllers/qrCode.controller');
+const paymentRequestController = require('../controllers/paymentRequest.controller');
 const adminSettingsRoutes = require('./adminSettings.routes');
 const { adminAuth } = require('../middleware/auth');
 
@@ -156,6 +157,161 @@ router.get('/transactions', adminAuth, transactionController.getTransactions);
  *         description: Transaction not found
  */
 router.get('/transactions/:id', adminAuth,transactionController.getTransaction);
+
+/**
+ * @swagger
+ * /admin/group-payments:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all group payments
+ *     description: Retrieve all group split payments with admin-level access and filtering
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, partially_paid, completed, expired]
+ *         description: Filter by payment status
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         description: Filter by user ID
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter payments from this date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter payments until this date
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by payment description
+ *     responses:
+ *       200:
+ *         description: Group payments retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     groupPayments:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                           type:
+ *                             type: string
+ *                             enum: [group_split]
+ *                           description:
+ *                             type: string
+ *                           amount:
+ *                             type: number
+ *                           currency:
+ *                             type: string
+ *                           status:
+ *                             type: string
+ *                           totalAmount:
+ *                             type: number
+ *                           splitType:
+ *                             type: string
+ *                           totalCollected:
+ *                             type: number
+ *                           paidParticipants:
+ *                             type: integer
+ *                           totalParticipants:
+ *                             type: integer
+ *                           completionPercentage:
+ *                             type: number
+ *                           participants:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 id:
+ *                                   type: string
+ *                                   format: uuid
+ *                                 name:
+ *                                   type: string
+ *                                 email:
+ *                                   type: string
+ *                                 amount:
+ *                                   type: number
+ *                                 hasPaid:
+ *                                   type: boolean
+ *                                 paidAmount:
+ *                                   type: number
+ *                                 paidAt:
+ *                                   type: string
+ *                                   format: date-time
+ *                                 paymentMethod:
+ *                                   type: string
+ *                           user:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 format: uuid
+ *                               firstName:
+ *                                 type: string
+ *                               lastName:
+ *                                 type: string
+ *                               email:
+ *                                 type: string
+ *                               phone:
+ *                                 type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/group-payments', adminAuth, paymentRequestController.getAllGroupPayments);
 
 /**
  * @swagger
@@ -342,7 +498,7 @@ router.get('/users', adminAuth, userController.getAllUsers);
  *                 type: string
  *               lastName:
  *                 type: string
- *               phoneNumber:
+ *               phone:
  *                 type: string
  *               accountStatus:
  *                 type: string
