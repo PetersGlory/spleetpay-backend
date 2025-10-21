@@ -1,3 +1,4 @@
+const { Merchant } = require('../models');
 const analyticsService = require('../services/analytics.service');
 const { Op } = require('sequelize');
 
@@ -5,7 +6,9 @@ module.exports = {
   // Get merchant dashboard analytics
   async getMerchantDashboard(req, res) {
     try {
-      const merchantId = req.user.merchantId;
+      const userId = req.user.id;
+      const merchant = await Merchant.findOne({ where: { userId } });
+      const merchantId = merchant.id;
       
       if (!merchantId) {
         return res.status(403).json({

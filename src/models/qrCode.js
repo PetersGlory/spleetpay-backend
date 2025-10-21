@@ -47,6 +47,11 @@ const QRCode = sequelize.define('QRCode', {
     defaultValue: 0,
     field: 'usage_count'
   },
+  paymentLink: {
+    type: DataTypes.STRING(512),
+    allowNull: true,
+    field: 'payment_link'
+  },
   expiresAt: {
     type: DataTypes.DATE,
     allowNull: true,

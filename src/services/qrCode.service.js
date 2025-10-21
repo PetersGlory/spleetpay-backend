@@ -1,5 +1,6 @@
 const QRCode = require('qrcode');
 const { QRCode: QRCodeModel } = require('../models');
+const generatePaymentToken = require('../middleware/generatePaymentToken');
 
 class QRCodeService {
   /**
@@ -78,12 +79,13 @@ class QRCodeService {
       } = qrCodeData;
 
       // Generate payment URL
-      const baseUrl = process.env.FRONTEND_URL || 'https://spleetpay.ng';
-      const paymentUrl = `${baseUrl}/pay?type=${type}&merchant=${merchantId}`;
+      const linkToken = await generatePaymentToken();
+      const baseUrl = process.env.PAYMENT_LINK_DOMAIN || 'https://receiver.spleetpay.ng';
+      let paymentUrl = `${baseUrl}/p/${linkToken}`;
       
-      if (amount) {
-        paymentUrl += `&amount=${amount}`;
-      }
+      // if (amount) {
+      //   paymentUrl += `&amount=${amount}`;
+      // }
 
       // Generate QR code data URL
       const qrDataURL = await this.generateQRCodeDataURL(paymentUrl);
@@ -97,6 +99,7 @@ class QRCodeService {
         description,
         isActive: true,
         usageLimit,
+        paymentLink:paymentUrl,
         expiresAt,
         qrData: qrDataURL
       });
@@ -110,7 +113,7 @@ class QRCodeService {
           amount: qrCode.amount,
           description: qrCode.description,
           qrData: qrCode.qrData,
-          paymentUrl,
+          paymentLink: paymentUrl,
           usageLimit: qrCode.usageLimit,
           usageCount: qrCode.usageCount,
           expiresAt: qrCode.expiresAt,
@@ -190,6 +193,8 @@ class QRCodeService {
         offset: parseInt(offset),
         order: [['createdAt', 'DESC']]
       });
+
+      // console.log(rows)
 
       return {
         success: true,

@@ -147,16 +147,28 @@ module.exports = {
   async uploadKYCDocument(req, res) {
     try {
       const userId = req.user.id;
-      const merchant = await Merchant.findOne({ where: { userId } });
+      let merchant = await Merchant.findOne({ where: { userId } });
 
       if (!merchant) {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Merchant account not found'
-          }
-        });
+        // Try to find the user to check if user exists at all
+        merchant = await User.findByPk(userId);
+        if (!merchant) {
+          return res.status(404).json({
+            success: false,
+            error: {
+              code: 'USER_NOT_FOUND',
+              message: 'User account not found'
+            }
+          });
+        } else {
+          return res.status(404).json({
+            success: false,
+            error: {
+              code: 'NOT_FOUND',
+              message: 'Merchant account not found'
+            }
+          });
+        }
       }
 
       const { documentType } = req.body;

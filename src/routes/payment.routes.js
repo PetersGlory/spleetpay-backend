@@ -68,4 +68,40 @@ router.get('/link/:linkToken', paymentRequestController.getPaymentByLink);
  */
 router.post('/:paymentId/participants/:participantId/pay', paymentRequestController.processParticipantPayment);
 
+
+/**
+ * @swagger
+ * /payment/banks:
+ *   get:
+ *     tags: [Payment]
+ *     summary: Get all supported banks
+ *     description: Retrieve a list of all banks supported for payment and disbursement.
+ *     responses:
+ *       200:
+ *         description: A list of supported banks returned successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 allBanks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         example: "Guaranty Trust Bank"
+ *                       code:
+ *                         type: string
+ *                         example: "058"
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/banks', paymentRequestController.getAllBanks);
+
+
 module.exports = router;

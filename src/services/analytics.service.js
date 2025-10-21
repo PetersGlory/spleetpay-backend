@@ -40,7 +40,7 @@ class AnalyticsService {
         Transaction.count({ where: { ...whereClause, status: 'pending' } }),
         Transaction.count({ where: { ...whereClause, status: 'failed' } }),
         Transaction.sum('amount', { where: { ...whereClause, status: 'completed' } }),
-        Transaction.sum('merchantFee', { where: { ...whereClause, status: 'completed' } })
+        Transaction.sum('merchant_fee', { where: { ...whereClause, status: 'completed' } })
       ]);
 
       // Get transaction types breakdown
@@ -63,12 +63,13 @@ class AnalyticsService {
       });
 
       // Get monthly revenue trend (last 12 months)
+      // Using MySQL or databases without DATE_TRUNC: use DATE_FORMAT for month grouping.
       const monthlyRevenue = await Transaction.findAll({
         attributes: [
-          [sequelize.fn('DATE_TRUNC', 'month', sequelize.col('createdAt')), 'month'],
+          [sequelize.fn('DATE_FORMAT', sequelize.col('createdAt'), '%Y-%m-01'), 'month'],
           [sequelize.fn('COUNT', sequelize.col('id')), 'transactionCount'],
           [sequelize.fn('SUM', sequelize.col('amount')), 'revenue'],
-          [sequelize.fn('SUM', sequelize.col('merchantFee')), 'fees']
+          [sequelize.fn('SUM', sequelize.col('merchant_fee')), 'fees']
         ],
         where: {
           ...whereClause,
@@ -77,8 +78,8 @@ class AnalyticsService {
             [Op.gte]: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
           }
         },
-        group: [sequelize.fn('DATE_TRUNC', 'month', sequelize.col('createdAt'))],
-        order: [[sequelize.fn('DATE_TRUNC', 'month', sequelize.col('createdAt')), 'ASC']]
+        group: [sequelize.fn('DATE_FORMAT', sequelize.col('createdAt'), '%Y-%m-01')],
+        order: [[sequelize.fn('DATE_FORMAT', sequelize.col('createdAt'), '%Y-%m-01'), 'ASC']]
       });
 
       // Calculate success rate
@@ -403,8 +404,8 @@ class AnalyticsService {
           [dateTrunc, 'period'],
           [sequelize.fn('COUNT', sequelize.col('id')), 'transactionCount'],
           [sequelize.fn('SUM', sequelize.col('amount')), 'revenue'],
-          [sequelize.fn('SUM', sequelize.col('merchantFee')), 'merchantFees'],
-          [sequelize.fn('SUM', sequelize.col('gatewayFee')), 'gatewayFees']
+          [sequelize.fn('SUM', sequelize.col('merchant_fee')), 'merchantFees'],
+          [sequelize.fn('SUM', sequelize.col('gateway_fee')), 'gatewayFees']
         ],
         where: whereClause,
         group: [dateTrunc],

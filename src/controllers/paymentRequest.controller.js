@@ -612,5 +612,26 @@ module.exports = {
         }
       });
     }
+  },
+
+  // getting all banks
+  async getAllBanks(req, res){
+    try{
+      const bankLists = await paymentService.getBanks();
+
+      return res.status(200).json({
+        success: true,
+        allBanks: bankLists
+      });
+    }catch(err){
+      console.error('Get all group payments error:', err);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch group payments'
+        }
+      });
+    }
   }
 };
