@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const merchantController = require('../controllers/merchant.controller');
+const settlementController = require('../controllers/settlement.controller');
 const { auth, adminAuth } = require('../middleware/auth');
 const { uploadKYCDocument, handleUploadError } = require('../middleware/upload');
 
@@ -200,7 +201,104 @@ router.post('/api-key/generate', auth, merchantController.generateAPIKey);
  *       401:
  *         description: Unauthorized
  */
-router.get('/stats', auth, merchantController.getMerchantStats);
+router.get('/stats', auth, settlementController.getMerchantStats);
+
+// Settlement routes
+/**
+ * @swagger
+ * /merchant/settlements/request:
+ *   post:
+ *     tags: [Merchant]
+ *     summary: Request settlement
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *               bankAccountId:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Settlement requested successfully
+ *       400:
+ *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - KYC not approved
+ */
+router.post('/settlements/request', auth, settlementController.requestSettlement);
+
+/**
+ * @swagger
+ * /merchant/settlements:
+ *   get:
+ *     tags: [Merchant]
+ *     summary: Get all settlements
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Settlements retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/settlements', auth, settlementController.listSettlements);
+
+/**
+ * @swagger
+ * /merchant/settlements/:settlementId:
+ *   get:
+ *     tags: [Merchant]
+ *     summary: Get settlement details
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: settlementId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Settlement details retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Settlement not found
+ */
+router.get('/settlements/:settlementId', auth, settlementController.getSettlementDetails);
 
 // Admin routes
 /**

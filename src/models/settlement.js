@@ -39,10 +39,30 @@ const Settlement = sequelize.define('Settlement', {
     allowNull: true,
     field: 'settlement_date'
   },
+  reference: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    unique: true,
+    field: 'reference'
+  },
   bankReference: {
     type: DataTypes.STRING(255),
     allowNull: true,
     field: 'bank_reference'
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  bankAccountId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'bank_account_id'
+  },
+  failureReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'failure_reason'
   },
   transactionCount: {
     type: DataTypes.INTEGER,

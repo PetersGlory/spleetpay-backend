@@ -8,6 +8,7 @@ const paymentRateController = require('../controllers/paymentRate.controller');
 const walletController = require('../controllers/wallet.controller');
 const qrCodeController = require('../controllers/qrCode.controller');
 const paymentRequestController = require('../controllers/paymentRequest.controller');
+const settlementController = require('../controllers/settlement.controller');
 const adminSettingsRoutes = require('./adminSettings.routes');
 const { adminAuth } = require('../middleware/auth');
 
@@ -1293,5 +1294,161 @@ router.post('/analytics/reports', adminAuth, analyticsController.generateReport)
 
 // Admin Settings Routes
 router.use('/settings', adminSettingsRoutes);
+
+/**
+ * @swagger
+ * /admin/settlements:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all settlements (Admin)
+ *     description: Retrieve all settlements across all merchants with admin-level access
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, processing, completed, failed]
+ *         description: Filter by settlement status
+ *       - in: query
+ *         name: merchantId
+ *         schema:
+ *           type: string
+ *         description: Filter by merchant ID
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter settlements from this date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter settlements until this date
+ *     responses:
+ *       200:
+ *         description: Settlements retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/settlements', adminAuth, settlementController.getAllSettlements);
+
+/**
+ * @swagger
+ * /admin/settlements/:id:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get settlement details (Admin)
+ *     description: Retrieve detailed information about a specific settlement with admin-level access
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Settlement ID
+ *     responses:
+ *       200:
+ *         description: Settlement details retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       404:
+ *         description: Settlement not found
+ */
+router.get('/settlements/:id', adminAuth, settlementController.getAdminSettlementDetails);
+
+/**
+ * @swagger
+ * /admin/settlements/:id/approve:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Approve/process settlement (Admin)
+ *     description: Approve and process a pending settlement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Settlement ID
+ *     responses:
+ *       200:
+ *         description: Settlement approved and processed successfully
+ *       400:
+ *         description: Bad request - Settlement cannot be processed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       404:
+ *         description: Settlement not found
+ */
+router.put('/settlements/:id/approve', adminAuth, settlementController.approveSettlement);
+
+/**
+ * @swagger
+ * /admin/settlements/:id/reject:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Reject settlement (Admin)
+ *     description: Reject a pending settlement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Settlement ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Reason for rejection
+ *     responses:
+ *       200:
+ *         description: Settlement rejected successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       404:
+ *         description: Settlement not found
+ */
+router.put('/settlements/:id/reject', adminAuth, settlementController.rejectSettlement);
 
 module.exports = router; 
