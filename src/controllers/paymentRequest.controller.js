@@ -1,4 +1,4 @@
-const { PaymentRequest, SplitParticipant, Transaction, User, WalletTransaction } = require('../models');
+const { PaymentRequest, SplitParticipant, Transaction, User, WalletTransaction,GroupSplitContributor } = require('../models');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const paymentService = require('../services/payment.service');
@@ -633,5 +633,245 @@ module.exports = {
         }
       });
     }
+  },
+
+  async verifyParticipantPayment(req, res) {
+    try {
+      const { paymentId, participantId } = req.params;
+      const { reference, status } = req.body;
+
+      // Check if this is a direct payment (pay_for_me) or split contribution
+      const isDirect = participantId === 'direct';
+
+      // If status is failed, don't do anything
+      if (status === 'failed' || status === 'error') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'PAYMENT_FAILED',
+            message: 'Payment failed. No transaction created.'
+          }
+        });
+      }
+
+      // Only proceed if status is successful
+      if (status !== 'success' && status !== 'successful' && status !== 'completed') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_STATUS',
+            message: 'Invalid payment status. Expected "success" or "successful".'
+          }
+        });
+      }
+
+      // Find the payment request
+      const paymentRequest = await PaymentRequest.findByPk(paymentId);
+
+      if (!paymentRequest) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'PAYMENT_REQUEST_NOT_FOUND',
+            message: 'Payment request not found'
+          }
+        });
+      }
+
+      let participant = null;
+      let customerName, customerEmail, customerPhone, participantAmount;
+
+      // Handle based on whether it's direct or split
+      if (isDirect) {
+        // For direct payment (pay_for_me), use payment request details
+        if (paymentRequest.type !== 'pay_for_me') {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'INVALID_PAYMENT_TYPE',
+              message: 'This payment request is not a "pay_for_me" type'
+            }
+          });
+        }
+
+        // Get customer details from request body or payment request
+        customerName = req.body.customerName || req.body.name || 'Anonymous';
+        customerEmail = req.body.customerEmail || req.body.email;
+        customerPhone = req.body.customerPhone || req.body.phone;
+        participantAmount = paymentRequest.amount;
+
+      } else {
+        // For split payment, find the participant
+        participant = await SplitParticipant.findByPk(participantId, {
+          include: [
+            {
+              model: PaymentRequest,
+              as: 'paymentRequest'
+            }
+          ]
+        });
+
+        if (!participant || !participant.paymentRequest || participant.paymentRequest.id != paymentId) {
+          return res.status(404).json({
+            success: false,
+            error: {
+              code: 'PARTICIPANT_NOT_FOUND',
+              message: 'Participant does not belong to this payment request'
+            }
+          });
+        }
+
+        if (paymentRequest.type !== 'group_split') {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'INVALID_PAYMENT_TYPE',
+              message: 'This payment request is not a "group_split" type'
+            }
+          });
+        }
+
+        customerName = participant.name;
+        customerEmail = participant.email;
+        customerPhone = participant.phone;
+        participantAmount = participant.amount;
+      }
+
+      // Check if transaction already exists
+      let transaction = await Transaction.findOne({
+        where: {
+          paymentRequestId: paymentId,
+          participantId: isDirect ? null : participantId,
+          providerTransactionId: reference
+        }
+      });
+
+      // If transaction already exists and is completed, return success
+      if (transaction && transaction.status === 'completed') {
+        return res.json({
+          success: true,
+          data: {
+            transaction,
+            paymentStatus: 'success',
+            message: 'Payment already verified'
+          }
+        });
+      }
+
+      // Create new transaction for successful payment
+      if (!transaction) {
+        transaction = await Transaction.create({
+          paymentRequestId: paymentId,
+          participantId: isDirect ? null : participantId,
+          userId: paymentRequest.userId,
+          type: paymentRequest.type,
+          description: paymentRequest.description,
+          customerName,
+          customerEmail,
+          customerPhone,
+          amount: participantAmount,
+          currency: paymentRequest.currency,
+          paymentMethod: req.body.paymentMethod || 'paystack',
+          paymentProvider: 'paystack',
+          providerTransactionId: reference,
+          status: 'completed',
+          reference: reference,
+          tipAmount: req.body.tipAmount || 0
+        });
+      } else {
+        // Update existing transaction to completed
+        await transaction.update({ status: 'completed' });
+      }
+
+      // Handle based on payment request type
+      if (isDirect || paymentRequest.type === 'pay_for_me') {
+        // For "pay_for_me" (direct payment), mark payment request as completed immediately
+        await paymentRequest.update({ status: 'completed' });
+
+        return res.json({
+          success: true,
+          data: {
+            transaction,
+            paymentStatus: 'success',
+            paymentRequestStatus: 'completed',
+            message: 'Payment completed successfully'
+          }
+        });
+
+      } else if (paymentRequest.type === 'group_split') {
+        // Mark participant as paid
+        await participant.update({
+          hasPaid: true,
+          paidAt: new Date(),
+          paidAmount: participantAmount,
+          paymentMethod: 'paystack'
+        });
+
+        // For "group_split", create GroupSplitContributor record
+        await GroupSplitContributor.create({
+          transactionId: transaction.id,
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          amount: participantAmount,
+          status: 'paid',
+          paymentReference: reference,
+          paidAt: new Date(),
+          paymentMethod: 'paystack'
+        });
+
+        // Check if all participants have paid
+        const totalParticipants = await SplitParticipant.count({
+          where: { paymentRequestId: paymentId }
+        });
+
+        const paidParticipants = await SplitParticipant.count({
+          where: {
+            paymentRequestId: paymentId,
+            hasPaid: true
+          }
+        });
+
+        let newStatus;
+        if (paidParticipants === totalParticipants) {
+          // All participants paid - mark as completed
+          newStatus = 'completed';
+        } else if (paidParticipants > 0) {
+          // Some participants paid - mark as partially_paid
+          newStatus = 'partially_paid';
+        } else {
+          // This shouldn't happen but keep as pending
+          newStatus = 'pending';
+        }
+
+        await paymentRequest.update({ status: newStatus });
+
+        return res.json({
+          success: true,
+          data: {
+            transaction,
+            paymentStatus: 'success',
+            paymentRequestStatus: newStatus,
+            paidParticipants,
+            totalParticipants,
+            message: `Payment verified. ${paidParticipants}/${totalParticipants} participants have paid.`
+          }
+        });
+
+      }
+
+    } catch (error) {
+      console.error('Verify participant payment error:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to verify participant payment',
+          details: error.message
+        }
+      });
+    }
   }
+
+  
 };

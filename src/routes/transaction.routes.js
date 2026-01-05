@@ -14,7 +14,7 @@ const { auth, adminAuth } = require('../middleware/auth');
 // Create transaction
 /**
  * @swagger
- * /transaction/create:
+ * /transactions/create:
  *   post:
  *     tags: [Transaction]
  *     summary: Create a new transaction
@@ -39,7 +39,7 @@ router.post('/create', auth, transactionController.createTransaction);
 // Get transactions with filters
 /**
  * @swagger
- * /transaction:
+ * /transactions:
  *   get:
  *     tags: [Transaction]
  *     summary: Get transactions
@@ -69,7 +69,7 @@ router.get('/', auth, transactionController.getTransactions);
 // Get transaction by ID
 /**
  * @swagger
- * /transaction/{id}:
+ * /transactions/{id}:
  *   get:
  *     tags: [Transaction]
  *     summary: Get transaction by ID
@@ -93,7 +93,7 @@ router.get('/:id', auth, transactionController.getTransaction);
 // Initialize payment
 /**
  * @swagger
- * /transaction/{id}/initialize:
+ * /transactions/{id}/initialize:
  *   post:
  *     tags: [Transaction]
  *     summary: Initialize payment for a transaction
@@ -117,7 +117,7 @@ router.post('/:id/initialize', auth, transactionController.initializePayment);
 // Verify payment
 /**
  * @swagger
- * /transaction/verify/{reference}:
+ * /transactions/verify/{reference}:
  *   get:
  *     tags: [Transaction]
  *     summary: Verify payment
@@ -136,12 +136,12 @@ router.post('/:id/initialize', auth, transactionController.initializePayment);
  *       401:
  *         description: Unauthorized
  */
-router.get('/verify/:reference', auth, transactionController.verifyPayment);
+router.get('/verify/:reference', transactionController.verifyPayment);
 
 // Send payment reminders (for group splits)
 /**
  * @swagger
- * /transaction/{id}/reminders:
+ * /transactions/{id}/reminders:
  *   post:
  *     tags: [Transaction]
  *     summary: Send payment reminders
@@ -165,7 +165,7 @@ router.post('/:id/reminders', auth, transactionController.sendReminders);
 // Cancel transaction
 /**
  * @swagger
- * /transaction/{id}/cancel:
+ * /transactions/{id}/cancel:
  *   put:
  *     tags: [Transaction]
  *     summary: Cancel transaction

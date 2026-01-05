@@ -274,6 +274,8 @@ class PaymentService {
         .createHmac('sha512', process.env.PAYSTACK_WEBHOOK_SECRET)
         .update(payload, 'utf-8')
         .digest('hex');
+
+        console.log("paystack-key: ",hash)
       
       return hash === signature;
     } catch (error) {

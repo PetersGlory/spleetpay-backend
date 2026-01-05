@@ -71,6 +71,64 @@ router.post('/:paymentId/participants/:participantId/pay', paymentRequestControl
 
 /**
  * @swagger
+ * /payment/{paymentId}/participants/{participantId}/verify:
+ *   post:
+ *     tags: [Payment]
+ *     summary: Verify a payment for a specific participant
+ *     parameters:
+ *       - in: path
+ *         name: paymentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the payment.
+ *       - in: path
+ *         name: participantId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the participant.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reference:
+ *                 type: string
+ *                 description: The payment reference to verify.
+ *               status:
+ *                 type: string
+ *                 description: Status to verify against ("success", "failed", "pending").
+ *             required:
+ *               - reference
+ *               - status
+ *     responses:
+ *       200:
+ *         description: Payment verification result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transaction:
+ *                   type: object
+ *                   description: The transaction record.
+ *                 paymentStatus:
+ *                   type: string
+ *                   enum: [success, failed, pending]
+ *                   description: Status of the verified payment.
+ *       400:
+ *         description: Bad Request
+ *       404:
+ *         description: Payment or participant not found
+ */
+router.post('/:paymentId/participants/:participantId/verify', paymentRequestController.verifyParticipantPayment);
+
+
+/**
+ * @swagger
  * /payment/banks:
  *   get:
  *     tags: [Payment]

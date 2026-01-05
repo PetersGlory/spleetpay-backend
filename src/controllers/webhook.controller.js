@@ -25,6 +25,9 @@ module.exports = {
 
       const { event, data } = req.body;
 
+      console.log("event: ",event)
+      console.log("Data: ",data)
+
       // Process webhook event
       const result = await paymentService.processWebhookEvent({ event, data });
 
