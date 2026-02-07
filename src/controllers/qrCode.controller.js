@@ -142,7 +142,7 @@ module.exports = {
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: result.data
       });
