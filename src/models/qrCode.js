@@ -61,6 +61,12 @@ const QRCode = sequelize.define('QRCode', {
     type: DataTypes.TEXT,
     allowNull: false,
     field: 'qr_data'
+  },
+  linkToken: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    unique: true,
+    field: 'link_token'
   }
 }, {
   timestamps: true,

@@ -34,6 +34,14 @@ const Transaction = sequelize.define('Transaction', {
       key: 'id'
     }
   },
+  qrCodeId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'QRCodes',
+      key: 'id'
+    }
+  },
   participantId: {
     type: DataTypes.UUID,
     allowNull: true,

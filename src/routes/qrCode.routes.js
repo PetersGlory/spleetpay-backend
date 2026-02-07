@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const qrCodeController = require('../controllers/qrCode.controller');
@@ -149,5 +148,49 @@ router.delete('/:id', auth, qrCodeController.deactivateQRCode);
  *         description: Unauthorized
  */
 router.get('/stats/overview', auth, qrCodeController.getQRCodeStats);
+
+/**
+ * @swagger
+ * /qr/link/{linkToken}:
+ *   get:
+ *     tags: [QR Code]
+ *     summary: Retrieve QR code by link token
+ *     parameters:
+ *       - in: path
+ *         name: linkToken
+ *         required: true
+ *         description: The token for the QR code link
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: QR code retrieved successfully
+ *       404:
+ *         description: QR code not found
+ */
+router.get('/qr/link/:linkToken', qrCodeController.getQRCodeByLinkToken);
+
+/**
+ * @swagger
+ * /qr/verify/{linkToken}:
+ *   post:
+ *     tags: [QR Code]
+ *     summary: Verify QR code payment
+ *     parameters:
+ *       - in: path
+ *         name: linkToken
+ *         required: true
+ *         description: The token for the QR code link
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: QR code payment verified successfully
+ *       400:
+ *         description: Invalid request
+ *       404:
+ *         description: QR code not found
+ */
+router.post('/qr/verify/:linkToken', qrCodeController.verifyQRCodePayment);
 
 module.exports = router;

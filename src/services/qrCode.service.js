@@ -72,7 +72,7 @@ class QRCodeService {
         merchantId,
         name,
         type,
-        amount,
+        // amount,
         description,
         usageLimit,
         expiresAt
@@ -80,8 +80,8 @@ class QRCodeService {
 
       // Generate payment URL
       const linkToken = await generatePaymentToken();
-      const baseUrl = process.env.PAYMENT_LINK_DOMAIN || 'https://receiver.spleetpay.ng';
-      let paymentUrl = `${baseUrl}/p/${linkToken}`;
+      const baseUrl = process.env.PAYMENT_LINK_DOMAIN || 'https://receiver.spleetpay.com';
+      let paymentUrl = `${baseUrl}/qr/${linkToken}`;
       
       // if (amount) {
       //   paymentUrl += `&amount=${amount}`;
@@ -95,13 +95,14 @@ class QRCodeService {
         merchantId,
         name,
         type,
-        amount,
+        // amount,
         description,
         isActive: true,
         usageLimit,
         paymentLink:paymentUrl,
         expiresAt,
-        qrData: qrDataURL
+        qrData: qrDataURL,
+        linkToken
       });
 
       return {
@@ -110,7 +111,7 @@ class QRCodeService {
           id: qrCode.id,
           name: qrCode.name,
           type: qrCode.type,
-          amount: qrCode.amount,
+          // amount: qrCode.amount,
           description: qrCode.description,
           qrData: qrCode.qrData,
           paymentLink: paymentUrl,

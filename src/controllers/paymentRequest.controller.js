@@ -783,6 +783,8 @@ module.exports = {
         await transaction.update({ status: 'completed' });
       }
 
+      await emailService.sendPaymentConfirmationEmail(customerEmail, customerName, participantAmount, paymentRequest.currency, paymentRequest.description);
+
       // Handle based on payment request type
       if (isDirect || paymentRequest.type === 'pay_for_me') {
         // For "pay_for_me" (direct payment), mark payment request as completed immediately
