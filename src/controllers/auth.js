@@ -67,7 +67,8 @@ module.exports = {
           lastName,
         phone,
         preferredCurrency: preferredCurrency || 'NGN',
-        verificationToken
+        verificationToken,
+        isVerified: true
       });
 
       // Create wallet for the user

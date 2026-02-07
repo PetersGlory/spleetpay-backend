@@ -135,6 +135,16 @@ module.exports = {
         });
         
         createdParticipants.push(createdParticipant);
+        await emailService.sendPaymentRequestEmail({
+          contributorEmail: participant.email,
+          contributorName: participant.name,
+          amount: participant.amount,
+          currency: paymentRequest.currency,
+          description,
+          paymentUrl: participantLink,
+          merchantName: req.user?.businessName || 'SpleetPay',
+          expiresAt: expiresAt
+        })
       }
       
       // Generate QR code

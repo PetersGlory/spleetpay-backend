@@ -62,9 +62,9 @@ class EmailService {
    * @returns {Promise<Object>} Send result
    */
   async sendWelcomeEmail(userData) {
-    const { email, firstName, verificationToken } = userData;
+    const { email, firstName } = userData;
     
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const appUrl = `${process.env.FRONTEND_URL}`;
     
     const html = `
       <!DOCTYPE html>
@@ -75,9 +75,9 @@ class EmailService {
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .header { background: #1434A4; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
           .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-          .button { background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }
+          .button { background: #1434A4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }
           .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
         </style>
       </head>
@@ -87,27 +87,26 @@ class EmailService {
             <h1>Welcome to SpleetPay!</h1>
           </div>
           <div class="content">
-            <h2>Hello ${firstName},</h2>
-            <p>Welcome to SpleetPay - your trusted payment platform for seamless "Pay-for-Me" and "Group Split" transactions.</p>
+            <h2>Hi ${firstName},</h2>
+            <p>Your account is all set! You're now ready to start making payments and splitting bills with SpleetPay.</p>
             
-            <p>To get started, please verify your email address by clicking the button below:</p>
+            <p>Click the button below to open the app and get started:</p>
             
-            <a href="${verificationUrl}" class="button">Verify Email Address</a>
+            <a href="${appUrl}" class="button">Open SpleetPay</a>
             
-            <p>If the button doesn't work, you can also copy and paste this link into your browser:</p>
-            <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-            
-            <p>Once verified, you'll be able to:</p>
+            <p>What you can do with SpleetPay:</p>
             <ul>
-              <li>Create and manage payment requests</li>
-              <li>Split bills with friends and family</li>
-              <li>Track your payment history</li>
-              <li>Enjoy secure and fast transactions</li>
+              <li>💳 Request payments from friends and family</li>
+              <li>👥 Split bills and group expenses easily</li>
+              <li>📊 Track all your transactions in one place</li>
+              <li>🔒 Enjoy secure and fast payments</li>
             </ul>
             
-            <p>If you didn't create an account with SpleetPay, please ignore this email.</p>
+            <p>Start by creating a payment request or initiating a group split - it's quick and simple!</p>
             
-            <p>Best regards,<br>The SpleetPay Team</p>
+            <p>If you have any questions or need help, our support team is here for you.</p>
+            
+            <p>Happy splitting!<br>The SpleetPay Team</p>
           </div>
           <div class="footer">
             <p>&copy; 2024 SpleetPay. All rights reserved.</p>
@@ -119,7 +118,7 @@ class EmailService {
 
     return await this.sendEmail({
       to: email,
-      subject: 'Welcome to SpleetPay - Verify Your Email',
+      subject: 'Welcome to SpleetPay - Get Started!',
       html
     });
   }
@@ -155,11 +154,11 @@ class EmailService {
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .header { background: #1434A4; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
           .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
           .payment-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .amount { font-size: 24px; font-weight: bold; color: #4F46E5; text-align: center; margin: 20px 0; }
-          .button { background: #4F46E5; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }
+          .amount { font-size: 24px; font-weight: bold; color: #1434A4; text-align: center; margin: 20px 0; }
+          .button { background: #1434A4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }
           .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
         </style>
       </head>
