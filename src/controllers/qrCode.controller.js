@@ -1,7 +1,8 @@
-const { QRCode, Merchant, GroupSplitContributor, Transaction } = require('../models');
+const { QRCode, Merchant, GroupSplitContributor, Transaction, SplitParticipant, PaymentRequest } = require('../models');
 const emailService = require('../services/email.service');
 const qrCodeService = require('../services/qrCode.service');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
 
 module.exports = {
   // Generate QR code
@@ -840,4 +841,327 @@ module.exports = {
       });
     }
   },
+
+  // Add these new methods to your QR code controller (document 6)
+
+/**
+ * Initialize QR code group split (public - no auth required)
+ * First person scans QR and sets up the split payment
+ */
+async initializeQRGroupSplit(req, res) {
+  try {
+    const { linkToken } = req.params;
+    const { 
+      organizerName, 
+      organizerEmail, 
+      organizerPhone,
+      description, 
+      totalAmount, 
+      participants, 
+      splitType 
+    } = req.body;
+
+    // Find QR code by linkToken
+    const qrCode = await QRCode.findOne({
+      where: { linkToken },
+      include: [
+        {
+          model: Merchant,
+          as: 'merchant',
+          attributes: ['id', 'businessName', 'businessEmail', 'userId']
+        }
+      ]
+    });
+
+    if (!qrCode) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'QR code not found or invalid link'
+        }
+      });
+    }
+
+    // Check if QR code is active
+    if (!qrCode.isActive) {
+      return res.status(410).json({
+        success: false,
+        error: {
+          code: 'QR_CODE_INACTIVE',
+          message: 'This QR code has been deactivated'
+        }
+      });
+    }
+
+    // Check if expired
+    if (qrCode.expiresAt && new Date() > qrCode.expiresAt) {
+      return res.status(410).json({
+        success: false,
+        error: {
+          code: 'QR_CODE_EXPIRED',
+          message: 'This QR code has expired'
+        }
+      });
+    }
+
+    // Validate inputs
+    if (!organizerName || !organizerEmail) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Organizer name and email are required'
+        }
+      });
+    }
+
+    if (!participants || participants.length < 1) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_PARTICIPANTS',
+          message: 'At least 1 additional participant is required'
+        }
+      });
+    }
+
+    if (!totalAmount || totalAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_AMOUNT',
+          message: 'Total amount must be greater than 0'
+        }
+      });
+    }
+
+    // Calculate amounts if split is equal
+    let participantAmounts = participants;
+    const totalParticipants = participants.length + 1; // +1 for organizer
+
+    if (splitType === 'equal') {
+      const amountPerPerson = totalAmount / totalParticipants;
+      participantAmounts = participants.map(participant => ({
+        ...participant,
+        amount: amountPerPerson
+      }));
+    }
+
+    // Validate total amount matches (for custom split)
+    if (splitType === 'custom') {
+      const participantsTotal = participantAmounts.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      if (Math.abs(participantsTotal - totalAmount) > 0.01) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'AMOUNT_MISMATCH',
+            message: 'Sum of participant amounts does not match total amount'
+          }
+        });
+      }
+    }
+
+    // Create a PaymentRequest for this QR code split
+    const paymentRequestLinkToken = crypto.randomBytes(32).toString('hex');
+    const paymentLink = `${process.env.PAYMENT_LINK_DOMAIN}/qr-split/${paymentRequestLinkToken}`;
+
+    const paymentRequest = await PaymentRequest.create({
+      userId: qrCode.merchant.userId,
+      qrCodeId: qrCode.id,
+      type: 'group_split',
+      description: description || qrCode.description || qrCode.name,
+      amount: totalAmount,
+      totalAmount: totalAmount,
+      currency: 'NGN',
+      expiresAt: qrCode.expiresAt,
+      paymentLink,
+      linkToken: paymentRequestLinkToken,
+      splitType,
+      allowTips: false
+    });
+
+    // Create organizer as first participant
+    const organizerAmount = splitType === 'equal' 
+      ? totalAmount / totalParticipants 
+      : totalAmount - participantAmounts.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+    const organizerLinkToken = crypto.randomBytes(32).toString('hex');
+    const organizerLink = `${process.env.PAYMENT_LINK_DOMAIN}/split/${organizerLinkToken}`;
+
+    const organizerParticipant = await SplitParticipant.create({
+      paymentRequestId: paymentRequest.id,
+      name: organizerName,
+      email: organizerEmail,
+      phone: organizerPhone || null,
+      amount: organizerAmount,
+      participantLink: organizerLink,
+      linkToken: organizerLinkToken
+    });
+
+    // Create other participants
+    const createdParticipants = [organizerParticipant];
+    
+    for (const participant of participantAmounts) {
+      const participantLinkToken = crypto.randomBytes(32).toString('hex');
+      const participantLink = `${process.env.PAYMENT_LINK_DOMAIN}/qr-split/${participantLinkToken}`;
+      
+      const createdParticipant = await SplitParticipant.create({
+        paymentRequestId: paymentRequest.id,
+        name: participant.name,
+        email: participant.email,
+        phone: participant.phone || null,
+        amount: participant.amount,
+        participantLink,
+        linkToken: participantLinkToken
+      });
+      
+      createdParticipants.push(createdParticipant);
+    }
+
+    // Send payment request emails to all participants
+    try {
+      const emailPromises = createdParticipants
+        .filter(p => !!p.email)
+        .map(p => emailService.sendPaymentRequestEmail({
+          contributorEmail: p.email,
+          contributorName: p.name,
+          amount: p.amount,
+          currency: 'NGN',
+          description: paymentRequest.description,
+          paymentUrl: p.participantLink,
+          merchantName: qrCode.merchant.businessName,
+          expiresAt: paymentRequest.expiresAt
+        }));
+      
+      await Promise.all(emailPromises);
+      console.log("Payment request emails sent!");
+    } catch (e) {
+      console.error('Error sending participant payment emails:', e);
+    }
+
+    // Increment QR code usage
+    await qrCodeService.incrementUsage(qrCode.id);
+
+    // Return the created payment request with participants
+    const result = await PaymentRequest.findByPk(paymentRequest.id, {
+      include: [{
+        model: SplitParticipant,
+        as: 'participants'
+      }]
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: result,
+      message: 'Group split payment created successfully. Payment links sent to all participants.'
+    });
+
+  } catch (error) {
+    console.error('Initialize QR group split error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to initialize group split payment',
+        details: error.message
+      }
+    });
+  }
+},
+
+/**
+ * Get QR code split payment details (public - no auth required)
+ */
+async getQRSplitPayment(req, res) {
+  try {
+    const { linkToken } = req.params; // This is the participant link token
+
+    // Find split participant by their linkToken
+    const participant = await SplitParticipant.findOne({
+      where: { linkToken },
+      include: [
+        {
+          model: PaymentRequest,
+          as: 'paymentRequest',
+          include: [
+            {
+              model: QRCode,
+              as: 'qrCode',
+              include: [
+                {
+                  model: Merchant,
+                  as: 'merchant',
+                  attributes: ['id', 'businessName', 'businessEmail', 'businessPhone']
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!participant) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Split payment not found'
+        }
+      });
+    }
+
+    const paymentRequest = participant.paymentRequest;
+
+    // Check if the parent payment request is expired
+    if (paymentRequest.expiresAt && new Date() > paymentRequest.expiresAt) {
+      return res.status(410).json({
+        success: false,
+        error: {
+          code: 'PAYMENT_EXPIRED',
+          message: 'This payment link has expired'
+        }
+      });
+    }
+
+    // Calculate total collected for this payment request
+    const transactions = await Transaction.findAll({
+      where: {
+        paymentRequestId: paymentRequest.id,
+        status: 'completed'
+      }
+    });
+
+    const totalCollected = transactions.reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+
+    // Count paid participants
+    const paidParticipants = paymentRequest.participants
+      ? paymentRequest.participants.filter(p => p.hasPaid).length
+      : 0;
+
+    return res.json({
+      success: true,
+      data: {
+        participant: participant.toJSON(),
+        paymentRequest: {
+          ...paymentRequest.toJSON(),
+          totalCollected,
+          paidParticipants,
+          totalParticipants: paymentRequest.participants?.length || 0
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get participant split payment error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch split payment details',
+        details: error.message
+      }
+    });
+  }
+},
 };

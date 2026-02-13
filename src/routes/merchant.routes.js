@@ -16,7 +16,7 @@ const { uploadKYCDocument, handleUploadError } = require('../middleware/upload')
 // Merchant registration and profile
 /**
  * @swagger
- * /merchant/register:
+ * /merchants/register:
  *   post:
  *     tags: [Merchant]
  *     summary: Register a new merchant
@@ -64,7 +64,7 @@ router.post('/register', auth, merchantController.registerMerchant);
 
 /**
  * @swagger
- * /merchant/profile:
+ * /merchants/profile:
  *   get:
  *     tags: [Merchant]
  *     summary: Get merchant profile
@@ -80,7 +80,7 @@ router.get('/profile', auth, merchantController.getMerchantProfile);
 
 /**
  * @swagger
- * /merchant/profile:
+ * /merchants/profile:
  *   put:
  *     tags: [Merchant]
  *     summary: Update merchant profile
@@ -118,7 +118,7 @@ router.put('/profile', auth, merchantController.updateMerchantProfile);
 
 /**
  * @swagger
- * /merchant/kyc/submit:
+ * /merchants/kyc/submit:
  *   post:
  *     tags: [Merchant]
  *     summary: Submit KYC information
@@ -144,7 +144,7 @@ router.post('/kyc/submit', auth, merchantController.submitKYC);
 
 /**
  * @swagger
- * /merchant/kyc/upload:
+ * /merchants/kyc/upload:
  *   post:
  *     tags: [Merchant]
  *     summary: Upload KYC document
@@ -173,7 +173,7 @@ router.post('/kyc/upload', auth, uploadKYCDocument('document'), handleUploadErro
 
 /**
  * @swagger
- * /merchant/api-key/generate:
+ * /merchants/api-key/generate:
  *   post:
  *     tags: [Merchant]
  *     summary: Generate API key
@@ -189,7 +189,7 @@ router.post('/api-key/generate', auth, merchantController.generateAPIKey);
 
 /**
  * @swagger
- * /merchant/stats:
+ * /merchants/stats:
  *   get:
  *     tags: [Merchant]
  *     summary: Get merchant statistics
@@ -206,7 +206,7 @@ router.get('/stats', auth, settlementController.getMerchantStats);
 // Settlement routes
 /**
  * @swagger
- * /merchant/settlements/request:
+ * /merchants/settlements/request:
  *   post:
  *     tags: [Merchant]
  *     summary: Request settlement
@@ -241,7 +241,7 @@ router.post('/settlements/request', auth, settlementController.requestSettlement
 
 /**
  * @swagger
- * /merchant/settlements:
+ * /merchants/settlements:
  *   get:
  *     tags: [Merchant]
  *     summary: Get all settlements
@@ -278,7 +278,7 @@ router.get('/settlements', auth, settlementController.listSettlements);
 
 /**
  * @swagger
- * /merchant/settlements/:settlementId:
+ * /merchants/settlements/:settlementId:
  *   get:
  *     tags: [Merchant]
  *     summary: Get settlement details

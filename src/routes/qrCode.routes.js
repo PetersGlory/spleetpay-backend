@@ -193,4 +193,7 @@ router.get('/qr/link/:linkToken', qrCodeController.getQRCodeByLinkToken);
  */
 router.post('/qr/verify/:linkToken', qrCodeController.verifyQRCodePayment);
 
+router.post('/qr/split/initialize/:linkToken', qrCodeController.initializeQRGroupSplit); // New
+router.get('/qr/split/:linkToken', qrCodeController.getQRSplitPayment); // New
+
 module.exports = router;

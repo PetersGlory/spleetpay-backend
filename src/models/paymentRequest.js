@@ -12,6 +12,15 @@ const PaymentRequest = sequelize.define('PaymentRequest', {
     allowNull: true,
     field: 'user_id'
   },
+  qrCodeId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'qr_code_id',  // Added field name
+    references: {
+      model: 'qr_codes',  // ✅ Changed to actual table name
+      key: 'id'
+    }
+  },
   type: {
     type: DataTypes.ENUM('pay_for_me', 'group_split'),
     allowNull: false

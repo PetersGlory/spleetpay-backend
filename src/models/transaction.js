@@ -37,8 +37,9 @@ const Transaction = sequelize.define('Transaction', {
   qrCodeId: {
     type: DataTypes.UUID,
     allowNull: true,
+    field: 'qr_code_id',  // Added field name
     references: {
-      model: 'QRCodes',
+      model: 'qr_codes',  // ✅ Changed to actual table name
       key: 'id'
     }
   },

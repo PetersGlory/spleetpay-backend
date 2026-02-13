@@ -35,12 +35,19 @@ WalletTransaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasOne(Wallet, { foreignKey: 'userId', as: 'wallet' });
 Wallet.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasMany(Merchant, { foreignKey: 'userId', as: 'merchants' });
+Merchant.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // PaymentRequest associations
 PaymentRequest.hasMany(SplitParticipant, { foreignKey: 'paymentRequestId', as: 'participants' });
 SplitParticipant.belongsTo(PaymentRequest, { foreignKey: 'paymentRequestId', as: 'paymentRequest' });
 
 PaymentRequest.hasMany(Transaction, { foreignKey: 'paymentRequestId', as: 'transactions' });
 Transaction.belongsTo(PaymentRequest, { foreignKey: 'paymentRequestId', as: 'paymentRequest' });
+
+// NEW: PaymentRequest ↔ QRCode association
+PaymentRequest.belongsTo(QRCode, { foreignKey: 'qrCodeId', as: 'qrCode' });
+QRCode.hasMany(PaymentRequest, { foreignKey: 'qrCodeId', as: 'paymentRequests' });
 
 // SplitParticipant associations
 SplitParticipant.hasMany(Transaction, { foreignKey: 'participantId', as: 'transactions' });
@@ -50,17 +57,23 @@ Transaction.belongsTo(SplitParticipant, { foreignKey: 'participantId', as: 'part
 Transaction.hasOne(WalletTransaction, { foreignKey: 'transactionId', as: 'walletTransaction' });
 WalletTransaction.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
 
-// Admin and Merchant associations (keeping existing)
-User.hasMany(Merchant, { foreignKey: 'userId', as: 'merchants' });
-Merchant.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Transaction.hasMany(Refund, { foreignKey: 'transactionId', as: 'refunds' });
+Refund.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
 
-// Merchant ↔ Transaction
-Merchant.hasMany(Transaction, { foreignKey: 'merchantId', as: 'transactions' });
-Transaction.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
+Transaction.hasOne(Dispute, { foreignKey: 'transactionId', as: 'dispute' });
+Dispute.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
+
+// NEW: Transaction ↔ QRCode association
+Transaction.belongsTo(QRCode, { foreignKey: 'qrCodeId', as: 'qrCode' });
+QRCode.hasMany(Transaction, { foreignKey: 'qrCodeId', as: 'transactions' });
 
 // Transaction ↔ GroupSplitContributor
 Transaction.hasMany(GroupSplitContributor, { foreignKey: 'transactionId', as: 'contributors' });
 GroupSplitContributor.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
+
+// Merchant associations
+Merchant.hasMany(Transaction, { foreignKey: 'merchantId', as: 'transactions' });
+Transaction.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
 
 Merchant.hasMany(Settlement, { foreignKey: 'merchantId', as: 'settlements' });
 Settlement.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
@@ -73,12 +86,6 @@ KYCDocument.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
 
 Merchant.hasMany(Director, { foreignKey: 'merchantId', as: 'directors' });
 Director.belongsTo(Merchant, { foreignKey: 'merchantId', as: 'merchant' });
-
-Transaction.hasMany(Refund, { foreignKey: 'transactionId', as: 'refunds' });
-Refund.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
-
-Transaction.hasOne(Dispute, { foreignKey: 'transactionId', as: 'dispute' });
-Dispute.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transaction' });
 
 // Admin associations
 AdminUser.hasMany(AdminPermission, { foreignKey: 'adminId', as: 'adminPermissions' });
@@ -95,7 +102,7 @@ const syncDatabase = async () => {
   try {
     // Disable foreign key checks for MySQL compatibility
     if (sequelize.getDialect() === 'mysql') {
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
     }
     
     const alterOption = process.env.NODE_ENV === 'development';
@@ -103,14 +110,14 @@ const syncDatabase = async () => {
     // Sync models in order to handle dependencies
     await User.sync({ alter: alterOption });
     await AdminUser.sync({ alter: alterOption });
+    await Merchant.sync({ alter: alterOption });
+    await QRCode.sync({ alter: alterOption });
     await PaymentRequest.sync({ alter: alterOption });
     await SplitParticipant.sync({ alter: alterOption });
     await Transaction.sync({ alter: alterOption });
     await WalletTransaction.sync({ alter: alterOption });
-    await Merchant.sync({ alter: alterOption });
     await GroupSplitContributor.sync({ alter: alterOption });
     await Settlement.sync({ alter: alterOption });
-    await QRCode.sync({ alter: alterOption });
     await KYCDocument.sync({ alter: alterOption });
     await Director.sync({ alter: alterOption });
     await Refund.sync({ alter: alterOption });
@@ -123,7 +130,7 @@ const syncDatabase = async () => {
     
     // Re-enable foreign key checks for MySQL
     if (sequelize.getDialect() === 'mysql') {
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
     }
     
     console.log('Database synced successfully');
