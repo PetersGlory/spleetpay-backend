@@ -21,15 +21,15 @@ module.exports = {
         });
       }
 
-      // if (merchant.kycStatus !== 'approved') {
-      //   return res.status(403).json({
-      //     success: false,
-      //     error: {
-      //       code: 'AUTHORIZATION_ERROR',
-      //       message: 'KYC must be approved to generate QR codes'
-      //     }
-      //   });
-      // }
+      if (merchant.kycStatus !== 'approved') {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTHORIZATION_ERROR',
+            message: 'KYC must be approved to generate QR codes'
+          }
+        });
+      }
 
       const {
         name,
