@@ -21,6 +21,7 @@ const adminRoutes = require('./routes/admin.routes');
 const settingsRoutes = require('./routes/adminSettings.routes.js')
 const errorHandler = require('./middleware/errorHandler');
 const setupSwagger = require('./swagger');
+const platformRoutes = require('./routes/platform.routes.js')
 
 const app = express();
 
@@ -71,11 +72,15 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment-rate', paymentRateRoutes);
 app.use('/api/admin/settings',settingsRoutes);
+// alongside your other route mounts
+app.use('/api/platform', platformRoutes);
+const setupPlatformSwagger = require('./swagger/platformSwagger');
 
 
 
 // Register Swagger docs
 setupSwagger(app);
+setupPlatformSwagger(app);
 
 // Error handling middleware
 app.use(errorHandler);

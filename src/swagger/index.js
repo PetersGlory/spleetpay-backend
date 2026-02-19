@@ -11,4 +11,5 @@ module.exports = (app) => {
       persistAuthorization: true
     }
   }));
+
 };

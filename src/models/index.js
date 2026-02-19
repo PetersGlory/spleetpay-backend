@@ -105,7 +105,7 @@ const syncDatabase = async () => {
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
     }
     
-    const alterOption = process.env.NODE_ENV === 'development';
+    const alterOption = false || process.env.NODE_ENV === 'development';
     
     // Sync models in order to handle dependencies
     await User.sync({ alter: alterOption });
