@@ -319,6 +319,23 @@ router.get('/settlements/:settlementId', auth, settlementController.getSettlemen
  */
 router.get('/all', adminAuth, merchantController.getAllMerchants);
 
+// Public routes
+/**
+ * @swagger
+ * /all-merchants:
+ *   get:
+ *     tags: [Merchant]
+ *     summary: Get all merchants (Public)
+ *     responses:
+ *       200:
+ *         description: Merchants retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/all-merchants', merchantController.getPublicMerchants);
+
 /**
  * @swagger
  * /admin/merchants/{id}/approve:

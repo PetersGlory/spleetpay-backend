@@ -502,6 +502,69 @@ module.exports = {
     }
   },
 
+  // Get all merchants (public)
+  async getPublicMerchants(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        kycStatus,
+        onboardingStatus,
+        search
+      } = req.query;
+
+      const whereClause = {};
+
+      if (kycStatus) whereClause.kycStatus = kycStatus;
+      if (onboardingStatus) whereClause.onboardingStatus = onboardingStatus;
+      if (search) {
+        whereClause[Op.or] = [
+          { businessName: { [Op.iLike]: `%${search}%` } },
+          { businessEmail: { [Op.iLike]: `%${search}%` } }
+        ];
+      }
+
+      const offset = (page - 1) * limit;
+
+      const { count, rows } = await Merchant.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'email', 'firstName', 'lastName']
+          }
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']],
+        attributes: { exclude: ['apiKey', 'settlementAccountNumber', 'settlementBankCode', 'settlementAccountName'] }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          merchants: rows,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get all merchants error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch merchants'
+        }
+      });
+    }
+  },
+
   // Approve merchant (admin only)
   async approveMerchant(req, res) {
     try {
