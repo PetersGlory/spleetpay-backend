@@ -1,4 +1,4 @@
-const { PaymentRequest, SplitParticipant, Transaction, User, WalletTransaction,GroupSplitContributor } = require('../models');
+const { PaymentRequest, SplitParticipant, Transaction, User, WalletTransaction,GroupSplitContributor, QRCode } = require('../models');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const paymentService = require('../services/payment.service');
@@ -63,7 +63,8 @@ module.exports = {
   // Create group split payment
   async createGroupSplitPayment(req, res) {
     try {
-      const { description, totalAmount, currency, participants, splitType, expiresInHours, allowTips } = req.body;
+      let qrId = null;
+      const { description, totalAmount, currency, participants, splitType, expiresInHours, allowTips, merchant } = req.body;
       
       // Validate participants
       if (!participants || participants.length < 2) {
@@ -97,6 +98,21 @@ module.exports = {
           }
         });
       }
+
+      if(merchant){
+        const merchantQR = await QRCode.findOne({where: {merchantId: merchant, type: 'group_split', isActive: true}});
+        if(merchantQR){
+          qrId = merchantQR.id;
+        } else {
+          return res.status(404).json({
+            success: false,
+            error: {
+              code: 'MERCHANT_QR_NOT_FOUND',
+              message: 'No active group split QR code found for this merchant'
+            }
+          });
+        }
+      }
       
       const expiresAt = expiresInHours ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000) : null;
       
@@ -115,7 +131,8 @@ module.exports = {
         linkToken,
         allowTips: allowTips !== false,
         totalAmount,
-        splitType
+        splitType,
+        qrCodeId: qrId
       });
       
       // Create participants
