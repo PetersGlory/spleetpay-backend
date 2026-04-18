@@ -212,6 +212,159 @@ module.exports = {
     }
   },
 
+
+  // async createGroupSplitPayment(req, res) {
+  //   const t = await sequelize.transaction(); // add sequelize import
+  //   try {
+  //     let qrId = null;
+  //     let resolvedMerchantId = null;
+
+  //     const {
+  //       description, totalAmount, currency, participants,
+  //       splitType, expiresInHours, allowTips, merchant
+  //     } = req.body;
+
+  //     // Validate participants
+  //     if (!participants || participants.length < 2) {
+  //       await t.rollback();
+  //       return res.status(400).json({
+  //         success: false,
+  //         error: {
+  //           code: 'INVALID_PARTICIPANTS',
+  //           message: 'At least 2 participants are required for group split'
+  //         }
+  //       });
+  //     }
+
+  //     // Calculate amounts if split is equal
+  //     let participantAmounts = participants;
+  //     if (splitType === 'equal') {
+  //       const amountPerPerson = totalAmount / participants.length;
+  //       participantAmounts = participants.map(p => ({ ...p, amount: amountPerPerson }));
+  //     }
+
+  //     // Validate total amount matches
+  //     const calculatedTotal = participantAmounts.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  //     if (Math.abs(calculatedTotal - totalAmount) > 0.01) {
+  //       await t.rollback();
+  //       return res.status(400).json({
+  //         success: false,
+  //         error: {
+  //           code: 'AMOUNT_MISMATCH',
+  //           message: 'Sum of participant amounts does not match total amount'
+  //         }
+  //       });
+  //     }
+
+  //     // Resolve merchant QR code if merchant ID provided
+  //     if (merchant) {
+  //       const merchantQR = await QRCode.findOne({
+  //         where: { merchantId: merchant, type: 'group_split', isActive: true },
+  //         transaction: t
+  //       });
+
+  //       if (!merchantQR) {
+  //         await t.rollback();
+  //         return res.status(404).json({
+  //           success: false,
+  //           error: {
+  //             code: 'MERCHANT_QR_NOT_FOUND',
+  //             message: 'No active group split QR code found for this merchant'
+  //           }
+  //         });
+  //       }
+
+  //       qrId = merchantQR.id;
+  //       resolvedMerchantId = merchantQR.merchantId; // ✅ store for later use
+  //     }
+
+  //     const expiresAt = expiresInHours
+  //       ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000)
+  //       : null;
+
+  //     const linkToken = crypto.randomBytes(32).toString('hex');
+  //     const paymentLink = `${process.env.PAYMENT_LINK_DOMAIN}/p/${linkToken}`;
+
+  //     const paymentRequest = await PaymentRequest.create({
+  //       userId: req.user?.id || null,
+  //       merchantId: resolvedMerchantId, // ✅ store merchantId directly on PaymentRequest
+  //       type: 'group_split',
+  //       description,
+  //       amount: totalAmount,
+  //       currency: currency || req.user?.preferredCurrency || 'NGN',
+  //       expiresAt,
+  //       paymentLink,
+  //       linkToken,
+  //       allowTips: allowTips !== false,
+  //       totalAmount,
+  //       splitType,
+  //       qrCodeId: qrId
+  //     }, { transaction: t });
+
+  //     // Create all participants in parallel
+  //     const createdParticipants = await Promise.all(
+  //       participantAmounts.map(participant => {
+  //         const participantLinkToken = crypto.randomBytes(32).toString('hex');
+  //         const participantLink = `${process.env.PAYMENT_LINK_DOMAIN}/split/${participantLinkToken}`;
+
+  //         return SplitParticipant.create({
+  //           paymentRequestId: paymentRequest.id,
+  //           name: participant.name,
+  //           email: participant.email,
+  //           phone: participant.phone || null,
+  //           amount: participant.amount,
+  //           participantLink,
+  //           linkToken: participantLinkToken
+  //         }, { transaction: t });
+  //       })
+  //     );
+
+  //     // Generate QR code
+  //     const qrCodeUrl = await qrCodeService.generateQRCodeDataURL(paymentLink);
+  //     await paymentRequest.update({ qrCodeUrl }, { transaction: t });
+
+  //     await t.commit();
+
+  //     // Send emails ONCE after commit — non-blocking, don't fail the request
+  //     emailService.sendPaymentRequestEmailBulk(
+  //       createdParticipants
+  //         .filter(p => !!p.email)
+  //         .map(p => ({
+  //           contributorEmail: p.email,
+  //           contributorName: p.name,
+  //           amount: p.amount,
+  //           currency: paymentRequest.currency,
+  //           description,
+  //           paymentUrl: p.participantLink,
+  //           merchantName: req.user?.businessName || 'SpleetPay',
+  //           expiresAt: paymentRequest.expiresAt
+  //         }))
+  //     ).catch(e => console.error('Error sending participant emails:', e));
+
+  //     const result = await PaymentRequest.findByPk(paymentRequest.id, {
+  //       include: [{ model: SplitParticipant, as: 'participants' }]
+  //     });
+
+  //     return res.status(201).json({
+  //       success: true,
+  //       data: result,
+  //       message: 'Group split payment created successfully'
+  //     });
+
+  //   } catch (error) {
+  //     await t.rollback();
+  //     console.error('Create group split payment error:', error);
+  //     return res.status(500).json({
+  //       success: false,
+  //       error: {
+  //         code: 'INTERNAL_SERVER_ERROR',
+  //         message: 'Failed to create group split payment'
+  //       }
+  //     });
+  //   }
+  // },
+
+
   // Get payment request details
   async getPaymentRequest(req, res) {
     try {
@@ -785,12 +938,15 @@ module.exports = {
         });
       }
 
+      const merchantId = paymentRequest.qrCodeId ? await QRCode.findOne({ where: { id: paymentRequest.qrCodeId } }) .then(qr => qr?.merchantId ?? null) : null;
+      
       // Create new transaction for successful payment
       if (!transaction) {
         transaction = await Transaction.create({
           paymentRequestId: paymentId,
           participantId: isDirect ? null : participantId,
           userId: paymentRequest.userId,
+          merchantId: merchantId,
           type: paymentRequest.type,
           description: paymentRequest.description,
           customerName,

@@ -74,13 +74,14 @@ app.use('/api/payment-rate', paymentRateRoutes);
 app.use('/api/admin/settings',settingsRoutes);
 // alongside your other route mounts
 app.use('/api/platform', platformRoutes);
-const setupPlatformSwagger = require('./swagger/platformSwagger');
+
+// const setupPlatformSwagger = require('./swagger/platformSwagger');
 
 
 
 // Register Swagger docs
 setupSwagger(app);
-setupPlatformSwagger(app);
+// setupPlatformSwagger(app);
 
 // Error handling middleware
 app.use(errorHandler);

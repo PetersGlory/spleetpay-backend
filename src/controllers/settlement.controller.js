@@ -26,15 +26,15 @@ module.exports = {
         totalRevenue,
         pendingAmount
       ] = await Promise.all([
-        Transaction.count({ where: { userId: merchant.userId } }),
-        Transaction.count({ where: { userId: merchant.userId, status: 'completed' } }),
-        Transaction.sum('amount', { where: { userId: merchant.userId, status: 'completed' } }),
-        Transaction.sum('amount', { where: { userId: merchant.userId, status: 'pending' } })
+        Transaction.count({ where: { merchantId: merchant.id } }),
+        Transaction.count({ where: { merchantId: merchant.id, status: 'completed' } }),
+        Transaction.sum('amount', { where: { merchantId: merchant.id, status: 'completed' } }),
+        Transaction.sum('amount', { where: { merchantId: merchant.id, status: 'pending' } })
       ]);
 
       // Get recent transactions
       const recentTransactions = await Transaction.findAll({
-        where: { userId: merchant.userId },
+        where: { merchantId: merchant.id },
         order: [['createdAt', 'DESC']],
         limit: 5,
         attributes: ['id', 'providerTransactionId', 'amount', 'status', 'paymentMethod', 'createdAt']
@@ -43,7 +43,7 @@ module.exports = {
       // Calculate available balance (completed transactions not yet settled)
       const completedTxns = await Transaction.findAll({
         where: {
-          userId: merchant.userId,
+          merchantId: merchant.id,
           status: 'completed'
         },
         attributes: ['id', 'amount', 'netAmount']
@@ -166,7 +166,7 @@ module.exports = {
 
       // Calculate available balance
       const totalRevenue = await Transaction.sum('amount', {
-        where: { userId: merchant.userId, status: 'completed' }
+        where: { merchantId: merchant.id, status: 'completed' }
       }) || 0;
 
       const pendingSettlement = await Settlement.sum('amount', {
@@ -318,8 +318,7 @@ module.exports = {
           userId: merchant.userId,
           status: 'completed',
           createdAt: {
-            [Op.gte]: settlement.periodStart,
-            [Op.lte]: settlement.periodEnd
+            [Op.lte]: settlement.createdAt
           }
         },
         attributes: ['id', 'amount', 'type', 'status', 'providerTransactionId', 'createdAt'],
