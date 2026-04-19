@@ -471,6 +471,10 @@ module.exports = {
             model: User,
             as: 'user',
             attributes: ['id', 'email', 'firstName', 'lastName']
+          },
+          {
+            model: Transaction,
+            as: 'transactions'
           }
         ],
         limit: parseInt(limit),
@@ -478,7 +482,7 @@ module.exports = {
         order: [['createdAt', 'DESC']]
       });
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           merchants: rows,
@@ -492,7 +496,7 @@ module.exports = {
       });
     } catch (error) {
       console.error('Get all merchants error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'INTERNAL_SERVER_ERROR',
@@ -608,18 +612,100 @@ module.exports = {
 
       await merchant.update(updateData);
 
-      res.json({
+      return res.json({
         success: true,
         data: merchant,
         message: `Merchant ${approved ? 'approved' : 'rejected'} successfully`
       });
     } catch (error) {
       console.error('Approve merchant error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to process merchant approval'
+        }
+      });
+    }
+  },
+
+  // Suspend merchant (admin only)
+  async suspendMerchant(req, res) {
+    try {
+      const { id } = req.params;
+      const { suspend } = req.body;
+
+      const merchant = await Merchant.findByPk(id);
+
+      if (!merchant) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Merchant not found'
+          }
+        });
+      }
+
+      await merchant.update({
+        onboardingStatus: suspend ? 'draft' : 'active'
+      });
+
+      return res.json({
+        success: true,
+        data: merchant,
+        message: `Merchant ${suspend ? 'suspended' : 'reinstated'} successfully`
+      });
+    } catch (error) {
+      console.error('Suspend merchant error:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to process merchant suspension'
+        }
+      });
+    }
+  },
+
+  // merchant update account number
+  async updateMerchantAccount(req, res){
+    const userId = req.user.id;
+    const {accountName, accountNumber, bankCode} = req.body;
+
+    try {
+      // find merchant
+      const merchantProfile = await Merchant.findOne({ where: { userId } });
+
+      if(!merchantProfile){
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Merchant account not found'
+          }
+        });
+      }
+
+      merchant.settlementAccountName = accountName;
+      merchant.settlementAccountNumber = accountNumber;
+      merchant.settlementBankCode = bankCode;
+
+      await merchantProfile.save();
+
+      return res.json({
+        success: true,
+        data: merchantProfile,
+        message: 'Settlement account updated successfully'
+      });
+
+    } catch (error) {
+      console.error('Merchant update account error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to process account update'
         }
       });
     }

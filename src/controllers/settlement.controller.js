@@ -130,7 +130,7 @@ module.exports = {
       const userId = req.user.id;
       const { amount, bankAccountId, description } = req.body;
 
-      const merchant = await Merchant.findOne({ where: { userId } });
+      const merchant = await Merchant.findOne({ where: { userId: userId } });
 
       if (!merchant) {
         return res.status(404).json({
@@ -151,6 +151,17 @@ module.exports = {
             message: 'KYC must be approved before requesting settlement'
           }
         });
+      }
+
+      // checking suspention
+      if(merchant.onboardingStatus !== "active" || merchant.onboardingStatus !== "approved"){
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: "SUSPENSION_ERROR",
+            message: "Merchant profile has been suspended."
+          }
+        })
       }
 
       // Validate amount

@@ -99,6 +99,29 @@ module.exports = {
         });
       }
 
+      const merchantProfile = await Merchant.findByPk(merchant);
+      if(!merchantProfile){
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'MERCHANT_NOT_FOUND',
+            message: 'Merchant not found with provided ID'
+          }
+        });
+      }
+
+      // suspended account
+      if(merchantProfile.onboardingStatus !== "approved" || merchantProfile.onboardingStatus !== "active"){
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'MERCHANT_SUSPENDED',
+            message: 'Merchant account is suspended'
+          }
+        });
+      }
+
+
       if(merchant){
         const merchantQR = await QRCode.findOne({where: {merchantId: merchant, type: 'group_split', isActive: true}});
         if(merchantQR){

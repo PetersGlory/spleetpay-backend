@@ -364,4 +364,39 @@ router.get('/all-merchants', merchantController.getPublicMerchants);
  */
 router.put('/:id/approve', adminAuth, merchantController.approveMerchant);
 
+
+/**
+ * @swagger
+ * /merchants/{id}/update-account:
+ *   put:
+ *     tags: [Merchant]
+ *     summary: Update merchant settlement account
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Merchant ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/MerchantSettlementAccount'
+ *     responses:
+ *       200:
+ *         description: Settlement account updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       404:
+ *         description: Merchant not found
+ */
+router.put('/:id/update-account', auth, merchantController.updateMerchantAccount);
+
 module.exports = router;
