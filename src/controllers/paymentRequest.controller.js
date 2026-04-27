@@ -111,7 +111,7 @@ module.exports = {
       }
 
       // suspended account
-      if(merchantProfile.onboardingStatus !== "approved" || merchantProfile.onboardingStatus !== "active"){
+      if(merchantProfile.kycStatus !== "approved" && merchantProfile.onboardingStatus !== "active"){
         return res.status(400).json({
           success: false,
           error: {
