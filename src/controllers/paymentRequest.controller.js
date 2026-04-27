@@ -1,4 +1,4 @@
-const { PaymentRequest, SplitParticipant, Transaction, User, WalletTransaction,GroupSplitContributor, QRCode } = require('../models');
+const { PaymentRequest, SplitParticipant, Transaction, User, WalletTransaction,GroupSplitContributor, QRCode, Merchant } = require('../models');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const paymentService = require('../services/payment.service');
@@ -127,13 +127,29 @@ module.exports = {
         if(merchantQR){
           qrId = merchantQR.id;
         } else {
-          return res.status(404).json({
-            success: false,
-            error: {
-              code: 'MERCHANT_QR_NOT_FOUND',
-              message: 'No active group split QR code found for this merchant'
-            }
-          });
+          const qrCodeData = {
+            merchantId: merchant,
+            name: `Group Split QR - ${merchantProfile.businessName}`,
+            type: 'group_split',
+            amount: totalAmount,
+            description,
+            usageLimit: null,
+            expiresAt: null
+          };
+    
+          const result = await qrCodeService.createPaymentQRCode(qrCodeData);
+
+          if (result.success) {
+            qrId = result.data.id;
+          } else {
+            return res.status(404).json({
+              success: false,
+              error: {
+                code: 'MERCHANT_QR_NOT_FOUND',
+                message: 'No active group split QR code found for this merchant'
+              }
+            });
+          }
         }
       }
       

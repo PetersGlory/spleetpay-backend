@@ -364,6 +364,36 @@ router.get('/all-merchants', merchantController.getPublicMerchants);
  */
 router.put('/:id/approve', adminAuth, merchantController.approveMerchant);
 
+/**
+ * @swagger
+ * /admin/merchants/{id}/suspend:
+ *   put:
+ *     tags: [Merchant]
+ *     summary: Suspend merchant (Admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Merchant ID
+ *     responses:
+ *       200:
+ *         description: Merchant suspended successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       404:
+ *         description: Merchant not found
+ */
+router.put('/:id/suspend', adminAuth, merchantController.suspendMerchant);
+
+
+
 
 /**
  * @swagger

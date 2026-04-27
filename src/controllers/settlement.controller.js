@@ -1,6 +1,7 @@
 const { Settlement, Merchant, Transaction, PaymentRequest, User } = require('../models');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
+const emailService = require('../services/email.service');
 
 module.exports = {
   // Get merchant settlement statistics (enhanced version)
@@ -253,11 +254,33 @@ module.exports = {
       });
 
       // Estimate completion time (T+1 = next business day)
-      const estimatedCompletion = new Date();
+      let estimatedCompletion = new Date();
       estimatedCompletion.setDate(estimatedCompletion.getDate() + 1);
       estimatedCompletion.setHours(14, 0, 0, 0);
 
-      res.json({
+      await emailService.sendMerchantSettlementRequestEmail({
+        email: merchant.businessEmail,
+        businessName: merchant.businessName,
+        amount,
+        currency: 'NGN',
+        reference,
+        bankAccount: `${bankAccount.bankName} • ${bankAccount.maskedAccountNumber}`,
+        estimatedCompletion
+      });
+
+      const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+      if (adminEmail) {
+        await emailService.sendAdminSettlementAlertEmail({
+          adminEmail,
+          businessName: merchant.businessName,
+          amount,
+          currency: 'NGN',
+          reference,
+          bankAccount: `${bankAccount.bankName} • ${bankAccount.maskedAccountNumber}`
+        });
+      }
+
+      return res.json({
         success: true,
         data: {
           settlementId: settlement.id,
@@ -272,7 +295,7 @@ module.exports = {
       });
     } catch (error) {
       console.error('Request settlement error:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'INTERNAL_SERVER_ERROR',

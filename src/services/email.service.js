@@ -6,6 +6,8 @@ const passwordReset = require('../templates/email/passwordReset');
 const merchantApproval = require('../templates/email/merchantApproval');
 const adminWelcome = require('../templates/email/adminWelcome');
 const adminPasswordReset = require('../templates/email/adminPasswordReset');
+const adminSettlementAlert = require('../templates/email/adminSettlementAlert');
+const merchantSettlementRequest = require('../templates/email/merchantSettlementRequest');
 
 class EmailService {
   constructor() {
@@ -254,6 +256,59 @@ class EmailService {
     return await this.sendEmail({
       to: email,
       subject: 'Password Reset - SpleetPay Admin',
+      html
+    });
+  }
+
+  /**
+   * Send settlement request confirmation to merchant
+   */
+  async sendMerchantSettlementRequestEmail(settlementData) {
+    const { email, businessName, amount, currency, reference, bankAccount, estimatedCompletion } = settlementData;
+
+    const formattedAmount = new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: currency || 'NGN'
+    }).format(amount);
+
+    const html = merchantSettlementRequest({   // template to create (see below)
+      businessName,
+      formattedAmount,
+      reference,
+      bankAccount,
+      estimatedCompletion,
+      dashboardUrl: process.env.MERCHANT_DASHBOARD_URL
+    });
+
+    return await this.sendEmail({
+      to: email,
+      subject: `Settlement Request Received – ${formattedAmount} | Ref: ${reference}`,
+      html
+    });
+  }
+
+  /**
+   * Send settlement request alert to admin
+   */
+  async sendAdminSettlementAlertEmail(settlementData) {
+    const { adminEmail, businessName, amount, currency, reference, bankAccount } = settlementData;
+
+    const formattedAmount = new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: currency || 'NGN'
+    }).format(amount);
+
+    const html = adminSettlementAlert({    // template to create (see below)
+      businessName,
+      formattedAmount,
+      reference,
+      bankAccount,
+      adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL
+    });
+
+    return await this.sendEmail({
+      to: adminEmail,
+      subject: `[Action Required] New Settlement Request – ${formattedAmount} from ${businessName}`,
       html
     });
   }
