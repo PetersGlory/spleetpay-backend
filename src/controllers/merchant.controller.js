@@ -4,6 +4,7 @@ const emailService = require('../services/email.service');
 const qrCodeService = require('../services/qrCode.service');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
+const { resolveBankName } = require('../utils/helpers');
 
 module.exports = {
   // Register merchant (user becomes merchant)
@@ -240,47 +241,56 @@ module.exports = {
 
   // Get merchant profile
   async getMerchantProfile(req, res) {
-    try {
-      const userId = req.user.id;
-      const merchant = await Merchant.findOne({
-        where: { userId },
-        include: [
-          {
-            model: KYCDocument,
-            as: 'kycDocuments'
-          },
-          {
-            model: Director,
-            as: 'directors'
-          }
-        ]
-      });
+  try {
+    const userId = req.user.id;
+    const merchant = await Merchant.findOne({
+      where: { userId },
+      include: [
+        {
+          model: KYCDocument,
+          as: 'kycDocuments'
+        },
+        {
+          model: Director,
+          as: 'directors'
+        }
+      ]
+    });
 
-      if (!merchant) {
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Merchant account not found'
-          }
-        });
-      }
-
-      res.json({
-        success: true,
-        data: merchant
-      });
-    } catch (error) {
-      console.error('Get merchant profile error:', error);
-      res.status(500).json({
+    if (!merchant) {
+      return res.status(404).json({
         success: false,
         error: {
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch merchant profile'
+          code: 'NOT_FOUND',
+          message: 'Merchant account not found'
         }
       });
     }
-  },
+
+    // Resolve bank name from settlement bank code
+    const merchantData = merchant.toJSON();
+
+    if (merchantData.settlementBankCode) {
+      merchantData.settlementBankName = await resolveBankName(merchantData.settlementBankCode);
+    } else {
+      merchantData.settlementBankName = null;
+    }
+
+    res.json({
+      success: true,
+      data: merchantData
+    });
+  } catch (error) {
+    console.error('Get merchant profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch merchant profile'
+      }
+    });
+  }
+},
 
   // Update merchant profile
   async updateMerchantProfile(req, res) {
@@ -669,45 +679,54 @@ module.exports = {
   },
 
   // merchant update account number
-  async updateMerchantAccount(req, res){
-    const userId = req.user.id;
-    const {accountName, accountNumber, bankCode} = req.body;
+  async updateMerchantAccount(req, res) {
+  const userId = req.user.id;
 
-    try {
-      // find merchant
-      const merchantProfile = await Merchant.findOne({ where: { userId } });
+  const {
+    settlementAccountName,
+    settlementAccountNumber,
+    settlementBankCode
+  } = req.body;
 
-      if(!merchantProfile){
-        return res.status(404).json({
-          success: false,
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Merchant account not found'
-          }
-        });
-      }
+  try {
+    const merchantProfile = await Merchant.findOne({
+      where: { userId }
+    });
 
-      merchant.settlementAccountName = accountName;
-      merchant.settlementAccountNumber = accountNumber;
-      merchant.settlementBankCode = bankCode;
-
-      await merchantProfile.save();
-
-      return res.json({
-        success: true,
-        data: merchantProfile,
-        message: 'Settlement account updated successfully'
-      });
-
-    } catch (error) {
-      console.error('Merchant update account error:', error);
-      res.status(500).json({
+    if (!merchantProfile) {
+      return res.status(404).json({
         success: false,
         error: {
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to process account update'
+          code: 'NOT_FOUND',
+          message: 'Merchant account not found'
         }
       });
     }
+
+    await merchantProfile.update({
+      settlementAccountName,
+      settlementAccountNumber,
+      settlementBankCode
+    });
+
+    await merchantProfile.reload();
+
+    return res.json({
+      success: true,
+      data: merchantProfile,
+      message: 'Settlement account updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Merchant update account error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to process account update'
+      }
+    });
   }
+}
 };

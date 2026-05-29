@@ -838,10 +838,7 @@ module.exports = {
     try{
       const bankLists = await paymentService.getBanks();
 
-      return res.status(200).json({
-        success: true,
-        allBanks: bankLists
-      });
+      return res.json({ success: true, data: bankLists.data, message: 'Banks fetched successfully' });
     }catch(err){
       console.error('Get all group payments error:', err);
       return res.status(500).json({

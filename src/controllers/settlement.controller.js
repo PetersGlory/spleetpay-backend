@@ -2,6 +2,7 @@ const { Settlement, Merchant, Transaction, PaymentRequest, User } = require('../
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const emailService = require('../services/email.service');
+const {  resolveBankName } = require('../utils/helpers');
 
 module.exports = {
   // Get merchant settlement statistics (enhanced version)
@@ -155,14 +156,14 @@ module.exports = {
       }
 
       // checking suspention
-      if(merchant.onboardingStatus !== "active" || merchant.onboardingStatus !== "approved"){
+      if (merchant.onboardingStatus === "draft") {
         return res.status(403).json({
           success: false,
           error: {
             code: "SUSPENSION_ERROR",
             message: "Merchant profile has been suspended."
           }
-        })
+        });
       }
 
       // Validate amount
@@ -188,7 +189,7 @@ module.exports = {
         }
       }) || 0;
 
-      const availableBalance = totalRevenue - pendingSettlement;
+      const availableBalance = Number(totalRevenue) - Number(pendingSettlement);
 
       if (amount > availableBalance) {
         return res.status(400).json({
@@ -220,9 +221,9 @@ module.exports = {
       const bankAccount = {
         accountName: merchant.settlementAccountName,
         accountNumber: merchant.settlementAccountNumber,
-        maskedAccountNumber: `****${merchant.settlementAccountNumber.slice(-4)}`,
+        maskedAccountNumber: merchant.settlementAccountNumber ? `****${merchant.settlementAccountNumber.slice(-4)}` : '****',
         bankCode: merchant.settlementBankCode,
-        bankName: this.getBankName(merchant.settlementBankCode)
+        bankName: await resolveBankName(merchant.settlementBankCode)
       };
 
       // Generate unique reference
@@ -231,14 +232,21 @@ module.exports = {
       // Get pending transactions to include in this settlement
       const pendingTransactions = await Transaction.findAll({
         where: {
-          userId: merchant.userId,
+          merchantId: merchant.id,
           status: 'completed'
         },
         limit: Math.ceil(amount / 1000), // Approximate number of transactions
         order: [['createdAt', 'ASC']]
       });
 
-      // Create settlement
+      // Get oldest and newest transaction dates
+      let estimatedCompletion = new Date();
+      estimatedCompletion.setDate(estimatedCompletion.getDate() + 1);
+      estimatedCompletion.setHours(14, 0, 0, 0);
+
+      const periodStart = new Date();
+      const periodEnd = estimatedCompletion;
+
       const settlement = await Settlement.create({
         merchantId: merchant.id,
         amount,
@@ -247,16 +255,27 @@ module.exports = {
         status: 'pending',
         description: description || 'Manual settlement request',
         bankAccount,
-        bankAccountId: merchant.id, // Using merchant ID as bank account ID for now
+        bankAccountId: merchant.id,
         reference,
         transactionCount: pendingTransactions.length,
-        settlementType: 'manual'
+        settlementType: 'manual',
+        periodStart,
+        periodEnd
       });
-
-      // Estimate completion time (T+1 = next business day)
-      let estimatedCompletion = new Date();
-      estimatedCompletion.setDate(estimatedCompletion.getDate() + 1);
-      estimatedCompletion.setHours(14, 0, 0, 0);
+      // Create settlement
+      // const settlement = await Settlement.create({
+      //   merchantId: merchant.id,
+      //   amount,
+      //   fee,
+      //   netAmount,
+      //   status: 'pending',
+      //   description: description || 'Manual settlement request',
+      //   bankAccount,
+      //   bankAccountId: merchant.id, // Using merchant ID as bank account ID for now
+      //   reference,
+      //   transactionCount: pendingTransactions.length,
+      //   settlementType: 'manual'
+      // });
 
       await emailService.sendMerchantSettlementRequestEmail({
         email: merchant.businessEmail,
@@ -349,7 +368,7 @@ module.exports = {
       // Get transactions for this settlement period
       const transactions = await Transaction.findAll({
         where: {
-          userId: merchant.userId,
+          merchantId: merchant.id,
           status: 'completed',
           createdAt: {
             [Op.lte]: settlement.createdAt
@@ -733,19 +752,6 @@ module.exports = {
     }
   },
 
-  // Helper function to get bank name
-  getBankName(bankCode) {
-    const banks = {
-      '044': 'Access Bank',
-      '050': 'Ecobank',
-      '058': 'GTBank',
-      '063': 'Access Bank (Diamond)',
-      '070': 'Fidelity Bank',
-      '011': 'First Bank',
-      '214': 'First City Monument Bank',
-      '058': 'Guaranty Trust Bank'
-    };
-    return banks[bankCode] || 'Unknown Bank';
-  }
+ 
 };
 
