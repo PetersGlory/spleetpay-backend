@@ -492,10 +492,22 @@ module.exports = {
         order: [['createdAt', 'DESC']]
       });
 
+      const merchants = await Promise.all(
+        rows.map(async (merchant) => {
+          const merchantData = merchant.toJSON();
+
+          merchantData.bankName = merchantData.settlementBankCode
+            ? await resolveBankName(merchantData.settlementBankCode)
+            : null;
+
+          return merchantData;
+        })
+      );
+
       return res.json({
         success: true,
         data: {
-          merchants: rows,
+          merchants: merchants,
           pagination: {
             total: count,
             page: parseInt(page),
